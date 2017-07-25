@@ -9,7 +9,7 @@ ajzlongart@gmail.com
 Descripcion: Modulo implementado para mejorar el color de las imagenes
 subacuaticas. Se basa en estirar el histograma (histogram stretching)
 de la imagen haciendo que los colores de la imagen de salida este
-mejorada...
+mejorada. Se uso el modelo de color RGB para el algoritmo
 
 
 Modulo implementado en Python
@@ -122,7 +122,7 @@ def sColorBalance(img, porcentaje):
 
 
 if __name__ == '__main__':
-	imgOriginal = cv2.imread('MVI_0234_Cap1.png')
+	imgOriginal = cv2.imread('MVI_0233_Cap1.png')
 
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(imgOriginal, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 	cv2.imshow("imgRecuperada", imgRecuperada)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
-	cv2.imwrite('imagenRecuperadaCR.jpg',imgRecuperada)
+	cv2.imwrite('imagenRecuperadaCR_RGB.jpg',imgRecuperada)
 
 	#-----Calculo de Histograma----------------------------------------------------
 	'''
@@ -144,19 +144,15 @@ if __name__ == '__main__':
 	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
 	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
 
-	   
-	   cv2.normalize(histcolorOriginal,histcolorOriginal,8,cv2.NORM_MINMAX)
-	   cv2.normalize(histcolorRecuperada,histcolorRecuperada,8,cv2.NORM_MINMAX)
-
 	   plt.subplot(211), plt.plot(histcolorOriginal, color=col)
 	   plt.title('Histograma Original')
-	   plt.ylabel('Valores Normalizados')
+	   plt.ylabel('Numero de Pixeles')
 	   plt.xlim([0,256])
 
 
 	   plt.subplot(212), plt.plot(histcolorRecuperada,color=col)
 	   plt.title('Histograma Recuperada')
-	   plt.ylabel('Valores Normalizados')
+	   plt.ylabel('Numero de Pixeles')
 	   plt.xlabel('Bins')
 	   plt.xlim([0,256])
 
