@@ -17,6 +17,8 @@ sustanciales en la imagen de salida adulterando el color y agregando blancos
 respectivamente alterando los resultados.
 
 Modulo implementado en Python
+
+Variacion del Simple Color Balance (en RGB) de DavidYKay: https://gist.github.com/DavidYKay/9dad6c4ab0d8d7dbf3dc 
 '''
 # Python 2/3 compatibility
 import cv2
@@ -66,12 +68,12 @@ def sColorBalance(img_hsv, porcentaje):
 	Funcion encarganda de:
 	Separar los canales HSV de la imagen (split)
 	Ordenar los valores de pixeles y seleccionar los "cuantiles" de la matriz ordenada
-	Obtener los valores max y min de la matriz ordenanda para cada canal HSV (a partir
+	Obtener los valores max y min de la matriz ordenanda para el canal V (a partir
 		del porcentaje de saturacion)
 	Saturar la imagen para los valores max y min de cada canal
 
-	Todo esto con el fin de que los colores HSV ocupen el mayor rango posible [0,255]
-	aplicando una transformacion afin a cada canal
+	Todo esto con el fin de que los colores de la imagen recuperada ocupen el mayor rango posible 
+	[0,255] aplicando una transformacion solo al canal V
 	'''
 	assert img_hsv.shape[2] == 3
 	assert porcentaje > 0 and porcentaje < 100
@@ -115,8 +117,6 @@ def sColorBalance(img_hsv, porcentaje):
 	print normalized
 	cv2.imshow("Madfe", normalized)
 	salida_canales.append(normalized)
-	cv2.imshow("zsrfag", salida_canales[0])
-	print normalized.shape
 	img_merge = cv2.merge((hueOri,satOri,normalized))
 
 	return img_merge
@@ -124,11 +124,11 @@ def sColorBalance(img_hsv, porcentaje):
 
 if __name__ == '__main__':
 	imgOriginal = cv2.imread('MVI_0234_Cap1.png')
-	img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2HSV) 		#Conversion de HSV de la imagen original a HSV
+	img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2HSV) 		#Conversion de HSV de la imagen original RGB
 
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(img_hsv, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
-	imgRecuperadaRGB = cv2.cvtColor(imgRecuperada,cv2.COLOR_HSV2BGR)	#Conversion de HSV de la imagen recuperada a RGB
+	imgRecuperadaRGB = cv2.cvtColor(imgRecuperada,cv2.COLOR_HSV2BGR)	#Conversion del canal V de la imagen recuperada a RGB
 
 	#-----Resultados----------------------------------------------------
 	cv2.imshow("imgOriginal", imgOriginal)
@@ -191,41 +191,3 @@ if __name__ == '__main__':
 
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
-
-
-#imgOriginal = cv2.imread('imagenRecuperadaCR_HSV.jpg')
-#img_rgb = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2RGB)
-#img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_HSV2BGR)
-#cv2.imshow("imgRecuperada", img_hsv)
-#cv2.imshow("imgOriginal", imgOriginal)
-#hOri, sOri, vOri = cv2.split(imgOriginal)
-#h, s, v = cv2.split(img_hsv)
-#
-#cv2.imshow("hOri", hOri)
-#cv2.imshow("sOri", sOri)
-#cv2.imshow("vOri", vOri)
-#cv2.imshow("h", h)
-#cv2.imshow("s", s)
-#cv2.imshow("v", v)
-#
-#print h
-#
-#hue,sat,val = img_hsv[:,:,0],img_hsv[:,:,1],img_hsv[:,:,2]
-#
-#plt.subplot(311)                             #plot in the first cell
-#plt.subplots_adjust(hspace=.5)
-#plt.title("Hue")
-#plt.hist(np.ndarray.flatten(hue), bins=180)
-#plt.xlim([0,180])
-#plt.subplot(312)                             #plot in the second cell
-#plt.title("Saturation")
-#plt.hist(np.ndarray.flatten(sat), bins=128)
-#plt.xlim([0,256])
-#plt.subplot(313)                             #plot in the third cell
-#plt.title("Luminosity Value")
-#plt.hist(np.ndarray.flatten(val), bins=128)
-#plt.xlim([0,256])
-#plt.show()
-#
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
