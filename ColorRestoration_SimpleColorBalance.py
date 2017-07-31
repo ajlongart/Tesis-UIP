@@ -11,8 +11,11 @@ subacuaticas. Se basa en estirar el histograma (histogram stretching)
 de la imagen haciendo que los colores de la imagen de salida este
 mejorada. Se uso el modelo de color RGB para el algoritmo
 
-
 Modulo implementado en Python
+
+Modulo basado del Simple Color Balance (en RGB) de DavidYKay: 
+https://gist.github.com/DavidYKay/9dad6c4ab0d8d7dbf3dc 
+
 '''
 # Python 2/3 compatibility
 import cv2
@@ -44,12 +47,10 @@ def apply_threshold(matrix, low_value, high_value):
 	El orden de ejecucion es Blue, Green, Red
 	'''
 	low_mask = matrix<low_value
-#	print low_mask
 	matrix = apply_mask(matrix,low_mask,low_value)
 	cv2.imshow("MatrixL", matrix)
 
 	high_mask = matrix>high_value
-#	print high_mask
 	matrix = apply_mask(matrix,high_mask,high_value)
 	cv2.imshow("MatrixH", matrix)
 
@@ -68,36 +69,25 @@ def sColorBalance(img, porcentaje):
 	Todo esto con el fin de que los colores RGB ocupen el mayor rango posible [0,255]
 	aplicando una transformacion afin a cada canal
 	'''
-#	print img.shape
 	assert img.shape[2] == 3
-	#assert porcentaje > 0 and porcentaje < 100
+	assert porcentaje > 0 and porcentaje < 100
 
 	mitad_porcentaje = porcentaje/200.0
 	canales = cv2.split(img)		#Separa los canales en RGB
 
-#	print canales
-
 	salida_canales = []
 	for canal in canales:
 		assert len(canal.shape) == 2
-#		print canal.shape
+		
 		# find the low and high precentile values (based on the input percentile)
 		filas,columnas = canal.shape
 		vec_tam = columnas*filas
 		flat = canal.reshape(vec_tam)
 
-#		print flat
-#		print flat.shape
-
 		assert len(flat.shape) == 1
 
 		flat = np.sort(flat)
-
-#		print flat
-
 		n_cols = flat.shape[0]
-
-#		print n_cols
 
 		#Seleccion de los valores minimos y maximos de cada canal RGB de la imagen. Seria el stretching
 		bajo_val  = flat[math.floor(n_cols*mitad_porcentaje)]		#Calcula el valor bajo del arreglo ordenado de la matriz (img) de entrada para cada canal
@@ -106,10 +96,6 @@ def sColorBalance(img, porcentaje):
 		#Los valores alto y bajo para cada canal RGB. El orden de impresion es Blue, Green, Red
 		print "Lowval: ", alto_val
 		print "Highval: ", bajo_val
-
-#		print math.floor(n_cols*mitad_porcentaje)
-
-#		print math.ceil(n_cols*(1.0-mitad_porcentaje))
 
 		# saturate below the low percentile and above the high percentile
 		thresholded = apply_threshold(canal,bajo_val,alto_val)
@@ -149,13 +135,11 @@ if __name__ == '__main__':
 	   plt.ylabel('Numero de Pixeles')
 	   plt.xlim([0,256])
 
-
 	   plt.subplot(212), plt.plot(histcolorRecuperada,color=col)
 	   plt.title('Histograma Recuperada')
 	   plt.ylabel('Numero de Pixeles')
 	   plt.xlabel('Bins')
 	   plt.xlim([0,256])
-
 
 	plt.show()
 
