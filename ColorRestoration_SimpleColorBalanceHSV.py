@@ -12,6 +12,9 @@ de la imagen haciendo que los colores de la imagen de salida este
 mejorada. Se uso el modelo de color HSV para el algoritmo.
 
 Modulo implementado en Python
+
+Variacion del Simple Color Balance (en RGB) de DavidYKay: https://gist.github.com/DavidYKay/9dad6c4ab0d8d7dbf3dc 
+
 '''
 # Python 2/3 compatibility
 import cv2
@@ -106,13 +109,9 @@ def sColorBalance(img_hsv, porcentaje):
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
 		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
-		cv2.imshow("zsrfag", salida_canales[0])
-		print normalized.shape
-		norm_tile = np.tile(normalized[:,:,np.newaxis],(1,1,3))
-		print norm_tile.shape
 	
 		
-	return cv2.merge(salida_canales)	#norm_tile
+	return cv2.merge(salida_canales)	
 
 
 if __name__ == '__main__':
@@ -182,41 +181,3 @@ if __name__ == '__main__':
 	
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
-
-
-#imgOriginal = cv2.imread('imagenRecuperadaCR_HSV.jpg')
-#img_rgb = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2RGB)
-#img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_HSV2BGR)
-#cv2.imshow("imgRecuperada", img_hsv)
-#cv2.imshow("imgOriginal", imgOriginal)
-#hOri, sOri, vOri = cv2.split(imgOriginal)
-#h, s, v = cv2.split(img_hsv)
-#
-#cv2.imshow("hOri", hOri)
-#cv2.imshow("sOri", sOri)
-#cv2.imshow("vOri", vOri)
-#cv2.imshow("h", h)
-#cv2.imshow("s", s)
-#cv2.imshow("v", v)
-#
-#print h
-#
-#hue,sat,val = img_hsv[:,:,0],img_hsv[:,:,1],img_hsv[:,:,2]
-#
-#plt.subplot(311)                             #plot in the first cell
-#plt.subplots_adjust(hspace=.5)
-#plt.title("Hue")
-#plt.hist(np.ndarray.flatten(hue), bins=180)
-#plt.xlim([0,180])
-#plt.subplot(312)                             #plot in the second cell
-#plt.title("Saturation")
-#plt.hist(np.ndarray.flatten(sat), bins=128)
-#plt.xlim([0,256])
-#plt.subplot(313)                             #plot in the third cell
-#plt.title("Luminosity Value")
-#plt.hist(np.ndarray.flatten(val), bins=128)
-#plt.xlim([0,256])
-#plt.show()
-#
-#cv2.waitKey(0)
-#cv2.destroyAllWindows()
