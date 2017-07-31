@@ -67,7 +67,8 @@ def get_atmosphere(img, dark_channel):
 	searchPixels = np.floor(numPixels*0.1)	#0.01	
 	searchPixelsInt = int(round(searchPixels))
 	dark_vector = np.reshape(dark_channel, (numPixels, 1))
-	img_vector = np.reshape(img, (numPixels,3)) 
+	img_vector = np.reshape(img, (numPixels,3))
+	print img_vector.shape 
 	indices = np.sort(dark_vector,axis=0)[::-1]		#Ordenamiento descendente. O tambien usar dark_vector[::-1].sort()
 	indicesA = dark_channel.ravel().argsort()[::-1]
 
@@ -171,7 +172,7 @@ def get_radiance(img, transmission, atmosphere):
 	#FUNCION REVISADA
 	filas,columnas,canales = img.shape
 	rep_atmosphere = np.tile(atmosphere,(filas,columnas,1))
-	max_tran = np.maximum(transmission,0.1)				#Se saca el maximo de la transmision para restringir
+	max_tran = np.maximum(transmission,0.1)							#Se saca el maximo de la transmision para restringir
 	max_transmission = np.tile(max_tran[:,:,np.newaxis],(1,1,3))
 
 	'''
@@ -185,12 +186,12 @@ def get_radiance(img, transmission, atmosphere):
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('tiananmen1.png'))/255
+	img = double(cv2.imread('MVI_0234_Cap1.png'))/255
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('tiananmen1.png')
+	imgOriginal = cv2.imread('MVI_0234_Cap1.png')
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
-	img = cv2.resize(img,None, fx=0.4,fy=0.4,interpolation=cv2.INTER_AREA)
+	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
 
@@ -230,10 +231,10 @@ if __name__ == '__main__':
 	cv2.imshow('radianciaOriginal', radiance)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
-	radianceNew = cv2.resize(radiance,None, fx=2.5,fy=2.5,interpolation=cv2.INTER_CUBIC)
+	radianceNew = cv2.resize(radiance,None, fx=1.25,fy=1.25,interpolation=cv2.INTER_CUBIC)
 	radiance255 = radianceNew*255
-	cv2.imwrite('imagenRecuperada.jpg',radiance255)
-	imgRecuperada = cv2.imread('imagenRecuperada.jpg')
+	cv2.imwrite('imagenRecuperadaDehaze.jpg',radiance255)
+	imgRecuperada = cv2.imread('imagenRecuperadaDehaze.jpg')
 
 	#-----Separacion de canales RGB-----------------------------------------------
 	Rrec, Grec, Brec = cv2.split(imgRecuperada)
@@ -261,6 +262,12 @@ if __name__ == '__main__':
 	cv2.namedWindow('radiancia img YCrCb',cv2.WINDOW_NORMAL)
 	cv2.imshow('radiancia img YCrCb', Yrec)
 
+	YOri_32bits = np.float32(YOri)
+	Yrec_32bits = np.float32(Yrec)
+	resta = cv2.subtract(YOri_32bits,Yrec_32bits)
+	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
+	cv2.imshow('Resta', resta)
+
 
 	#-----Calculo de Histograma----------------------------------------------------
 	'''
@@ -282,7 +289,7 @@ if __name__ == '__main__':
 
 	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
 	   plt.title('Histograma Original')
-	   plt.ylabel('Valores Normalizados')
+	   plt.ylabel('Numero de Pixeles')
 	   plt.xlim([0,256])
 
 	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
@@ -291,7 +298,7 @@ if __name__ == '__main__':
 
 	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
 	   plt.title('Histograma Recuperada')
-	   plt.ylabel('Valores Normalizados')
+	   plt.ylabel('Numero de Pixeles')
 	   plt.xlabel('Bins')
 	   plt.xlim([0,256])
 
@@ -304,3 +311,4 @@ if __name__ == '__main__':
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
+
