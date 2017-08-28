@@ -268,49 +268,63 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 	'''	
 	bimg,gimg,rimg = cv2.split(img)
 	filas,columnas,canales = img.shape
-	print rimg
+#	print rimg
 
 	#A partir de (avgRed+avgBlue+avgGreen)/3 = 0.5, se llega a:
 	avgGreen = np.mean(np.mean(radiance_gOri))
 	avgBlue = np.mean(np.mean(radiance_bOri))
+	print ('avgBlue:')
 	print avgBlue
+	print ('avgGreen:')
 	print avgGreen
 
 	MAX_avgBlue = np.max(radiance_bOri)
+	print ('MAX_avgBlue:')
 	print MAX_avgBlue
 	min_avgBlue = np.min(radiance_bOri)
 	min_avgBlue = np.absolute(min_avgBlue)
+	print ('min_avgBlue:')
 	print min_avgBlue
 
 	MAX_avgGreen = np.max(radiance_gOri)
+	print ('MAX_avgGreen:')
 	print MAX_avgGreen
 	min_avgGreen = np.min(radiance_gOri)
 	min_avgGreen = np.absolute(min_avgGreen)
+	print ('min_avgGreen:')
 	print min_avgGreen
 
 	nor_avgBlue = (avgBlue-min_avgBlue)/(MAX_avgBlue-min_avgBlue)
 
 #	nor_avgBlue = np.absolute(nor_avgBlue)
+	print ('nor_avgBlue:')
 	print nor_avgBlue
 	nor_avgGreen = (avgGreen-min_avgGreen)/(MAX_avgGreen-min_avgGreen)
 #	nor_avgGreen = np.absolute(nor_avgGreen)
+	print ('nor_avgGreen:')
 	print nor_avgGreen
 
 	nor_avgRed = 1.5-nor_avgBlue-nor_avgGreen
+	print ('nor_avgRed:')
 	print nor_avgRed
 
 	avgR = np.mean(np.mean(rimg))
+	print ('avgR:')
 	print avgR
 
 	MAX_avgR = np.max(rimg)
+	print ('MAX_avgR:')
 	print MAX_avgR
 	min_avgR = np.min(rimg)
+	print ('min_avgR:')
 	print min_avgR
 
 	nor_avgR = (avgR-min_avgR)/(MAX_avgR-min_avgR)
+	print ('nor_avgR:')
 	print nor_avgR
 
 	delta = nor_avgRed/nor_avgR
+	print ('delta:')
 	print delta
 
 	nor_R = np.zeros((filas,columnas))
@@ -320,8 +334,8 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 	nor_R = cv2.normalize(rimg,nor_R,0,255,cv2.NORM_MINMAX)
 	nor_G = cv2.normalize(radiance_gOri,nor_G,0,255,cv2.NORM_MINMAX)
 	nor_B = cv2.normalize(radiance_bOri,nor_B,0,255,cv2.NORM_MINMAX)
-	print nor_R
-	print nor_G
+#	print nor_R
+#	print nor_G
 	radiance_rOri = rimg*delta
 
 	img_merge = cv2.merge((radiance_bOri,radiance_gOri,radiance_rOri)) #Considerar tambien el GWa: radiance_rOri
@@ -332,10 +346,10 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('MVI_0233_Cap1.png'))/255 #/255	# 'DSC01369.jpg' 
+	img = double(cv2.imread('IMG_2388.jpg'))/255 #/255	# 'DSC01369.jpg' 
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('MVI_0233_Cap1.png')
+	imgOriginal = cv2.imread('IMG_2388.jpg')
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
 	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
@@ -349,16 +363,16 @@ if __name__ == '__main__':
 	omega = 0.95	#Parametro usado para conservar una minima cantidad de haze en la imagen para...  
 					#...efectos de profundidad. Rango entre 0 y 1. Transmission Estimate
 	tamanyo = 15	#Tamanyo del parche local (bloque) centrado un cierto pixel x. Dark-Channel Prior
-	radius = 100		#Tamanyo del bloque para el Guided Filter
+	radius = 50		#Tamanyo del bloque para el Guided Filter
 	eps = 0.001		#Parametro de regularizacion (llamado en el paper epsilon). Para el Guided Filter
 
 	#-----Llamado a Funciones----------------------------------------------------
 	#channelsNew = get_substract(img)
-	BgOri, BbOri = maxImagen(img,tamanyo)
+	BbOri, BgOri = maxImagen(img,tamanyo)
 	#print channelsNew
 #	print channelsNew.shape
-	print BgOri
-	print BbOri
+#	print BgOri
+#	print BbOri
 	dark_channel_bOri = get_dark_channel(bOri, tamanyo)
 	dark_channel_gOri = get_dark_channel(gOri, tamanyo)
 #	atmosphere = get_atmosphere(img, dark_channel)
@@ -369,7 +383,7 @@ if __name__ == '__main__':
 	transmission_bOri = np.reshape(filtro_bOri, (filas,columnas))
 	transmission_gOri = np.reshape(filtro_gOri, (filas,columnas))
 	radiance_bOri = get_radiance(bOri, transmission_bOri, BbOri)
-	radiance_gOri = get_radiance(gOri, transmission_bOri, BgOri)
+	radiance_gOri = get_radiance(gOri, transmission_gOri, BgOri)
 #	print radiance
 	grayWorld = get_grayWorld(radiance_bOri, radiance_gOri, img)
 
@@ -483,4 +497,3 @@ if __name__ == '__main__':
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
-
