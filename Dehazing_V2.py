@@ -214,18 +214,18 @@ if __name__ == '__main__':
 
 
 	#-----Resultados----------------------------------------------------
-#	cv2.namedWindow('darkChannel',cv2.WINDOW_NORMAL)
-#	cv2.imshow('darkChannel', dark_channel)
-#	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
-#	cv2.imshow('atmosphere', atmosphere)
-#	cv2.namedWindow('transEst',cv2.WINDOW_NORMAL)
-#	cv2.imshow('transEst', trans_est)
-#	cv2.namedWindow('Filtro',cv2.WINDOW_NORMAL)
-#	cv2.imshow('Filtro', filtro)
-#	cv2.namedWindow('transmision',cv2.WINDOW_NORMAL)
-#	cv2.imshow('transmision', transmission)
-#	cv2.namedWindow('radianciaOriginal',cv2.WINDOW_NORMAL)
-#	cv2.imshow('radianciaOriginal', radiance)
+	cv2.namedWindow('darkChannel',cv2.WINDOW_NORMAL)
+	cv2.imshow('darkChannel', dark_channel)
+	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
+	cv2.imshow('atmosphere', atmosphere)
+	cv2.namedWindow('transEst',cv2.WINDOW_NORMAL)
+	cv2.imshow('transEst', trans_est)
+	cv2.namedWindow('Filtro',cv2.WINDOW_NORMAL)
+	cv2.imshow('Filtro', filtro)
+	cv2.namedWindow('transmision',cv2.WINDOW_NORMAL)
+	cv2.imshow('transmision', transmission)
+	cv2.namedWindow('radianciaOriginal',cv2.WINDOW_NORMAL)
+	cv2.imshow('radianciaOriginal', radiance)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
 	radianceNew = cv2.resize(radiance,None, fx=1.25,fy=1.25,interpolation=cv2.INTER_CUBIC)
@@ -272,34 +272,34 @@ if __name__ == '__main__':
 	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
 	del algoritmo
 	'''
-#	color = ('b','g','r')
-#	for i, col in enumerate(color):
-#	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
-#	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
-#	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
-#	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
+	color = ('b','g','r')
+	for i, col in enumerate(color):
+	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
+	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
+	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
+	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
 
-#	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
-#	   plt.title('Histograma Original')
-#	   plt.ylabel('Numero de Pixeles')
-#	   plt.xlim([0,256])
+	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
+	   plt.title('Histograma Original')
+	   plt.ylabel('Numero de Pixeles')
+	   plt.xlim([0,256])
 
-#	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
-#	   plt.title('Histograma Luminancia Original')
-#	   plt.xlim([0,256])
+	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
+	   plt.title('Histograma Luminancia Original')
+	   plt.xlim([0,256])
 
-#	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
-#	   plt.title('Histograma Recuperada')
-#	   plt.ylabel('Numero de Pixeles')
-#	   plt.xlabel('Bins')
-#	   plt.xlim([0,256])
+	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
+	   plt.title('Histograma Recuperada')
+	   plt.ylabel('Numero de Pixeles')
+	   plt.xlabel('Bins')
+	   plt.xlim([0,256])
 
-#	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
-#	   plt.title('Histograma Luminancia Recuperada')
-#	   plt.xlabel('Bins')
-#	   plt.xlim([0,256])
+	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
+	   plt.title('Histograma Luminancia Recuperada')
+	   plt.xlabel('Bins')
+	   plt.xlim([0,256])
 
-#	plt.show()
+	plt.show()
 
 	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
 	'''
