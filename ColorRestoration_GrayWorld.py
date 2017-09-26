@@ -29,57 +29,6 @@ from matplotlib import pyplot as plt
 
 
 #-----Funciones a Implementar-----------------------------------------------------
-def get_substract(img):
-	bOri, gOri, rOri = cv2.split(img)
-	cv2.namedWindow('bOri',cv2.WINDOW_NORMAL)
-	cv2.imshow('bOri', bOri)
-	cv2.namedWindow('gOri',cv2.WINDOW_NORMAL)
-	cv2.imshow('gOri', gOri)
-	cv2.namedWindow('rOri',cv2.WINDOW_NORMAL)
-	cv2.imshow('rOri', rOri)
-
-#	f,c = bOri.shape
-#	resta = np.empty((f,c))
-#	for i in range(0,f):
-#		for j in range(0,c):
-#			resta[i][j] = bOri[i][j]-gOri[i][j]
-
-#	print bOri
-	resta = bOri-gOri
-	#resta = cv2.subtract(bOri,gOri)
-	#resta = np.subtract(bOri,gOri)
-	x = np.min(resta)
-	y = np.max(resta)
-	resta1 = resta+np.absolute(x)
-#	print x
-#	print y
-#	print resta
-#	print ('----')
-#	print resta1
-	restaR = resta1-rOri
-	#restaR = cv2.subtract(resta1,rOri)
-	x1 = np.min(restaR)
-	y1 = np.max(restaR)
-	restaRojo = restaR+np.absolute(x1)
-#	print restaRojo
-	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
-	cv2.imshow('Resta', resta)
-
-	return restaRojo
-def crop(Path, input, height, width, k, page, area):
-    im = Image.open(input)
-    imgwidth, imgheight = im.size
-    for i in range(0,imgheight,height):
-        for j in range(0,imgwidth,width):
-            box = (j, i, j+width, i+height)
-            a = im.crop(box)
-            try:
-                o = a.crop(area)
-                o.save(os.path.join(Path,"PNG","%s" % page,"IMG-%s.png" % k))
-            except:
-                pass
-            k +=1
-
 def maxImagen(img, tamanyo):
 	''''''
 	bOri, gOri, rOri = cv2.split(img)
@@ -96,11 +45,8 @@ def maxImagen(img, tamanyo):
 			max_r = np.max(window_r)
 			max_ch = max_r-max_bg		#(max_r-max_bg)+np.absolute(np.min(max_r-max_bg))
 			max_ch_array = np.array([max_ch])
-			#print max_ch
-			#max_channel[r,c] = padded_max[r:r+max_ch, r:r+max_ch, :]
 			max_channel[r,c] = max_ch_array
 
-	#aux = np.absolute(max_channel)
 	min_max_channel = np.min(max_channel)
 	background_bOri = np.mean(bOri*min_max_channel)
 	background_gOri = np.mean(gOri*min_max_channel)
@@ -131,34 +77,6 @@ def get_dark_channel(img, tamanyo):
 	(en el espacio de color RGB, padded_img) y el otro es un filtro minimo: dark_channel
 	'''		
 	return dark_channel
-
-
-def get_atmosphere(img, dark_channel):
-	'''
-	Esta funcion obtiene la luz atmosferica de la imagen RGB. A partir del dark-channel
-	se escogen (pick) el 0.1porciento de pixeles. Estos pixeles son usualmente los mas 
-	opacos (most haze-opaque). Entre esos pixeles, los pixeles con una mayor intensidad
-	en la imagen de entrada se seleccionan como la luz atmosferica
-	'''
-	#FUNCION REVISADA
-	filas,columnas,canales = img.shape
-	numPixels = filas*columnas
-	searchPixels = np.floor(numPixels*0.1)	#0.01	
-	searchPixelsInt = int(round(searchPixels))
-	dark_vector = np.reshape(dark_channel, (numPixels, 1))
-	img_vector = np.reshape(img, (numPixels,3)) 
-	indices = np.sort(dark_vector,axis=0)[::-1]		#Ordenamiento descendente. O tambien usar dark_vector[::-1].sort()
-	indicesA = dark_channel.ravel().argsort()[::-1]
-
-	contador = np.zeros((1,3))	
-	for i in range(1,searchPixelsInt+1):
-		acum = indicesA[i]
-		contador += img_vector[acum,:]	
-	
-	atmosphere = contador/searchPixelsInt
-
-	return atmosphere
-
 
 def get_transmission_estimate(img, atmosphere, omega, tamanyo):
 	'''
@@ -363,19 +281,14 @@ if __name__ == '__main__':
 	omega = 0.95	#Parametro usado para conservar una minima cantidad de haze en la imagen para...  
 					#...efectos de profundidad. Rango entre 0 y 1. Transmission Estimate
 	tamanyo = 15	#Tamanyo del parche local (bloque) centrado un cierto pixel x. Dark-Channel Prior
+	tamMax = 5		#Tamanyo del parche local para determinar el maximo pixel de la imagen en dicho bloque. maxImagen
 	radius = 50		#Tamanyo del bloque para el Guided Filter
 	eps = 0.001		#Parametro de regularizacion (llamado en el paper epsilon). Para el Guided Filter
 
 	#-----Llamado a Funciones----------------------------------------------------
-	#channelsNew = get_substract(img)
 	BbOri, BgOri = maxImagen(img,tamanyo)
-	#print channelsNew
-#	print channelsNew.shape
-#	print BgOri
-#	print BbOri
 	dark_channel_bOri = get_dark_channel(bOri, tamanyo)
 	dark_channel_gOri = get_dark_channel(gOri, tamanyo)
-#	atmosphere = get_atmosphere(img, dark_channel)
 	trans_est_bOri = get_transmission_estimate(bOri, BbOri, omega, tamanyo)
 	trans_est_gOri = get_transmission_estimate(gOri, BgOri, omega, tamanyo)
 	filtro_bOri = get_guidedfilter(bOri,trans_est_bOri,radius,eps)
@@ -384,20 +297,15 @@ if __name__ == '__main__':
 	transmission_gOri = np.reshape(filtro_gOri, (filas,columnas))
 	radiance_bOri = get_radiance(bOri, transmission_bOri, BbOri)
 	radiance_gOri = get_radiance(gOri, transmission_gOri, BgOri)
-#	print radiance
 	grayWorld = get_grayWorld(radiance_bOri, radiance_gOri, img)
 
-
-
+	
 	#-----Resultados----------------------------------------------------
-#	cv2.namedWindow('restChannel',cv2.WINDOW_NORMAL)
-#	cv2.imshow('restChannel', channelsNew)
+
 	cv2.namedWindow('darkChannelBlue',cv2.WINDOW_NORMAL)
 	cv2.imshow('darkChannelBlue', dark_channel_bOri)
 	cv2.namedWindow('darkChannelGreen',cv2.WINDOW_NORMAL)
 	cv2.imshow('darkChannelGreen', dark_channel_gOri)
-#	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
-#	cv2.imshow('atmosphere', atmosphere)
 	cv2.namedWindow('transEstBlue',cv2.WINDOW_NORMAL)
 	cv2.imshow('transEstBlue', trans_est_bOri)
 	cv2.namedWindow('transEstGreen',cv2.WINDOW_NORMAL)
@@ -416,14 +324,14 @@ if __name__ == '__main__':
 	cv2.imshow('radianciaGreen', radiance_gOri)
 	cv2.namedWindow('imagenFinal',cv2.WINDOW_NORMAL)
 	cv2.imshow('imagenFinal', grayWorld)
-#
+
 #	#-----Guardado de la imagen Recuperada-------------------------------------------
 	radianceNew = cv2.resize(grayWorld,None, fx=1.25,fy=1.25,interpolation=cv2.INTER_CUBIC)
 	radiance255 = radianceNew*255
 	cv2.imwrite('imagenRecuperadaDehazeGW.jpg',radiance255)
 	imgRecuperada = cv2.imread('imagenRecuperadaDehazeGW.jpg')
-#
-#	#-----Separacion de canales RGB-----------------------------------------------
+
+	#-----Separacion de canales RGB-----------------------------------------------
 	Rrec, Grec, Brec = cv2.split(imgRecuperada)
 	cv2.namedWindow('canalRojo',cv2.WINDOW_NORMAL)
 	cv2.imshow('canalRojo', Rrec)
@@ -431,13 +339,13 @@ if __name__ == '__main__':
 	cv2.imshow('canalVerde', Grec)
 	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
 	cv2.imshow('canalAzul', Brec)
-#
-#
-#	#-----Comparaciones---------------------------------------------------------
-#	'''
-#	Comparaciones en las imagenes original y recuperada para observar la 
-#	diferencia en el canal de luminancia
-#	'''
+
+
+	#-----Comparaciones---------------------------------------------------------
+	'''
+	Comparaciones en las imagenes original y recuperada para observar la 
+	diferencia en el canal de luminancia
+	'''
 	img_yrb = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2YCR_CB)		#img_yrb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
 	YOri, CrOri, CbOri = cv2.split(img_yrb)
 
@@ -453,25 +361,20 @@ if __name__ == '__main__':
 	resta = cv2.subtract(YOri,Yrec)
 	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
 	cv2.imshow('Resta', resta)
-#
-#
-#	#-----Calculo de Histograma----------------------------------------------------
-#	'''
-#	Se calcula el histograma de la imagen con haze, la imagen recuperada (c/u en el
-#	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
-#	del algoritmo
-#	'''
+
+
+	#-----Calculo de Histograma----------------------------------------------------
+	'''
+	Se calcula el histograma de la imagen con haze, la imagen recuperada (c/u en el
+	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
+	del algoritmo
+	'''
 	color = ('b','g','r')
 	for i, col in enumerate(color):
 	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
 	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
 	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
 	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
-	   
-#	   cv2.normalize(histcolorOriginal,histcolorOriginal,8,cv2.NORM_MINMAX)
-#	   cv2.normalize(histcolorOriginal_Y,histcolorOriginal_Y,8,cv2.NORM_MINMAX)
-#	   cv2.normalize(histcolorRecuperada,histcolorRecuperada,8,cv2.NORM_MINMAX)
-#	   cv2.normalize(histcolorRecuperada_Y,histcolorRecuperada_Y,8,cv2.NORM_MINMAX)
 
 	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
 	   plt.title('Histograma Original')
@@ -494,6 +397,60 @@ if __name__ == '__main__':
 	   plt.xlim([0,256])
 
 	plt.show()
+	
+	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
+	'''
+	Se realizan 3 tipos de analisis de la imagen resultante:
+	Espectro Frecuencial
+	Entropia
+	Deteccion de features
+	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
+	submarinas
+	'''
+
+	#Espectro Frecuencial
+	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMGRec = cv2.imread('imagenRecuperadaDehazeGW.jpg',0)
+	img32 = np.float32(IMG)
+	imgRec32 = np.float32(IMGRec)
+
+	row,col = np.shape(img32)
+
+	fourier32 = np.fft.fft2(img32)/float(row*col)
+	fourierShift32 = np.fft.fftshift(fourier32)
+	mod_fourier32 = np.abs(fourierShift32)
+
+	max_mod_fourier32 = np.max(mod_fourier32)
+	thresh32 = max_mod_fourier32/1000
+	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
+	tam_thresh_fourier32 = np.size(thresh_fourier32)
+
+	iqm32 = tam_thresh_fourier32/(float(row*col))
+
+	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
+	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
+	mod_fourierRec32 = np.abs(fourierShiftRec32)
+
+	max_mod_fourierRec32 = np.max(mod_fourierRec32)
+	threshRec32 = max_mod_fourierRec32/1000
+	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
+	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
+
+	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
+
+	print iqm32
+	print iqmRec32
+
+	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
+	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
+	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
+	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
+	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
+	plt.show()
+
+	cv2.waitKey()
+	cv2.destroyAllWindows()
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
