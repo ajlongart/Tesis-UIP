@@ -9,7 +9,7 @@ ajzlongart@gmail.com
 Descripcion: Modulo implementado para mejorar el color de las imagenes
 subacuaticas. Se basa en estirar el histograma (histogram stretching)
 de la imagen haciendo que los colores de la imagen de salida este
-mejorada. Se uso el modelo de color HSV para el algoritmo.
+mejorada. Se uso el modelo de color HSV para el algoritmo
 
 Modulo implementado en Python
 
@@ -109,13 +109,17 @@ def sColorBalance(img_hsv, porcentaje):
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
 		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
+		cv2.imshow("zsrfag", salida_canales[0])
+		print normalized.shape
+		norm_tile = np.tile(normalized[:,:,np.newaxis],(1,1,3))
+		print norm_tile.shape
 	
 		
-	return cv2.merge(salida_canales)	
+	return cv2.merge(salida_canales)	#norm_tile
 
 
 if __name__ == '__main__':
-	imgOriginal = cv2.imread('MVI_0234_Cap1.png')
+	imgOriginal = cv2.imread('GOPR0535_Cap_0004.jpg')
 	img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2HSV) 		#Conversion de HSV de la imagen original a HSV
 
 	#-----Llamado a Funcion----------------------------------------------------
@@ -178,6 +182,58 @@ if __name__ == '__main__':
 	   plt.xlim([0,256])
 
 	plt.show()
+
+	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
+	'''
+	Se realizan 3 tipos de analisis de la imagen resultante:
+	Espectro Frecuencial
+	Entropia
+	Deteccion de features
+	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
+	submarinas
+	'''
+
+	#Espectro Frecuencial
+	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMGRec = cv2.imread('imagenRecuperadaCR_HSV_RGB.jpg',0)
+	img32 = np.float32(IMG)
+	imgRec32 = np.float32(IMGRec)
+
+	row,col = np.shape(img32)
+
+	fourier32 = np.fft.fft2(img32)/float(row*col)
+	fourierShift32 = np.fft.fftshift(fourier32)
+	mod_fourier32 = np.abs(fourierShift32)
+
+	max_mod_fourier32 = np.max(mod_fourier32)
+	thresh32 = max_mod_fourier32/1000
+	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
+	tam_thresh_fourier32 = np.size(thresh_fourier32)
+
+	iqm32 = tam_thresh_fourier32/(float(row*col))
+
+	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
+	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
+	mod_fourierRec32 = np.abs(fourierShiftRec32)
+
+	max_mod_fourierRec32 = np.max(mod_fourierRec32)
+	threshRec32 = max_mod_fourierRec32/1000
+	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
+	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
+
+	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
+
+	print iqm32
+	print iqmRec32
+
+	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
+	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
+	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
+	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
+	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
+	plt.show()
 	
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
+
