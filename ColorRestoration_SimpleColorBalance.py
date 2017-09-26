@@ -12,10 +12,6 @@ de la imagen haciendo que los colores de la imagen de salida este
 mejorada. Se uso el modelo de color RGB para el algoritmo
 
 Modulo implementado en Python
-
-Modulo basado del Simple Color Balance (en RGB) de DavidYKay: 
-https://gist.github.com/DavidYKay/9dad6c4ab0d8d7dbf3dc 
-
 '''
 # Python 2/3 compatibility
 import cv2
@@ -34,7 +30,7 @@ def apply_mask(matrix, mask, fill_value):
 	El orden de ejecucion es Blue, Green, Red
 	'''
 	masked = np.ma.array(matrix,mask=mask,fill_value=fill_value)
-	cv2.imshow("Masked", masked)
+#	cv2.imshow("Masked", masked)
 	return masked.filled()
 
 
@@ -48,11 +44,11 @@ def apply_threshold(matrix, low_value, high_value):
 	'''
 	low_mask = matrix<low_value
 	matrix = apply_mask(matrix,low_mask,low_value)
-	cv2.imshow("MatrixL", matrix)
+#	cv2.imshow("MatrixL", matrix)
 
 	high_mask = matrix>high_value
 	matrix = apply_mask(matrix,high_mask,high_value)
-	cv2.imshow("MatrixH", matrix)
+#	cv2.imshow("MatrixH", matrix)
 
 	return matrix
 
@@ -69,8 +65,9 @@ def sColorBalance(img, porcentaje):
 	Todo esto con el fin de que los colores RGB ocupen el mayor rango posible [0,255]
 	aplicando una transformacion afin a cada canal
 	'''
+
 	assert img.shape[2] == 3
-	assert porcentaje > 0 and porcentaje < 100
+	#assert porcentaje > 0 and porcentaje < 100
 
 	mitad_porcentaje = porcentaje/200.0
 	canales = cv2.split(img)		#Separa los canales en RGB
@@ -78,7 +75,7 @@ def sColorBalance(img, porcentaje):
 	salida_canales = []
 	for canal in canales:
 		assert len(canal.shape) == 2
-		
+
 		# find the low and high precentile values (based on the input percentile)
 		filas,columnas = canal.shape
 		vec_tam = columnas*filas
@@ -101,20 +98,22 @@ def sColorBalance(img, porcentaje):
 		thresholded = apply_threshold(canal,bajo_val,alto_val)
 		# scale the canal
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
-		cv2.imshow("Madfe", normalized)
+#		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
 
 	return cv2.merge(salida_canales)
 
 
 if __name__ == '__main__':
-	imgOriginal = cv2.imread('MVI_0233_Cap1.png')
+	imgOriginal = cv2.imread('GOPR0535_Cap_0004.jpg')
 
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(imgOriginal, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
 
 	#-----Resultados----------------------------------------------------
+	cv2.namedWindow('imgOriginal',cv2.WINDOW_NORMAL)
 	cv2.imshow("imgOriginal", imgOriginal)
+	cv2.namedWindow('imgRecuperada',cv2.WINDOW_NORMAL)
 	cv2.imshow("imgRecuperada", imgRecuperada)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
@@ -135,12 +134,65 @@ if __name__ == '__main__':
 	   plt.ylabel('Numero de Pixeles')
 	   plt.xlim([0,256])
 
+
 	   plt.subplot(212), plt.plot(histcolorRecuperada,color=col)
 	   plt.title('Histograma Recuperada')
 	   plt.ylabel('Numero de Pixeles')
 	   plt.xlabel('Bins')
 	   plt.xlim([0,256])
 
+
+	plt.show()
+
+	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
+	'''
+	Se realizan 3 tipos de analisis de la imagen resultante:
+	Espectro Frecuencial
+	Entropia
+	Deteccion de features
+	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
+	submarinas
+	'''
+
+	#Espectro Frecuencial
+	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMGRec = cv2.imread('imagenRecuperadaCR_RGB.jpg',0)
+	img32 = np.float32(IMG)
+	imgRec32 = np.float32(IMGRec)
+
+	row,col = np.shape(img32)
+
+	fourier32 = np.fft.fft2(img32)/float(row*col)
+	fourierShift32 = np.fft.fftshift(fourier32)
+	mod_fourier32 = np.abs(fourierShift32)
+
+	max_mod_fourier32 = np.max(mod_fourier32)
+	thresh32 = max_mod_fourier32/1000
+	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
+	tam_thresh_fourier32 = np.size(thresh_fourier32)
+
+	iqm32 = tam_thresh_fourier32/(float(row*col))
+
+	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
+	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
+	mod_fourierRec32 = np.abs(fourierShiftRec32)
+
+	max_mod_fourierRec32 = np.max(mod_fourierRec32)
+	threshRec32 = max_mod_fourierRec32/1000
+	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
+	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
+
+	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
+
+	print iqm32
+	print iqmRec32
+
+	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
+	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
+	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
+	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
+	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
 
 	cv2.waitKey(0)
