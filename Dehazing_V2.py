@@ -68,7 +68,6 @@ def get_atmosphere(img, dark_channel):
 	searchPixelsInt = int(round(searchPixels))
 	dark_vector = np.reshape(dark_channel, (numPixels, 1))
 	img_vector = np.reshape(img, (numPixels,3))
-	print img_vector.shape 
 	indices = np.sort(dark_vector,axis=0)[::-1]		#Ordenamiento descendente. O tambien usar dark_vector[::-1].sort()
 	indicesA = dark_channel.ravel().argsort()[::-1]
 
@@ -186,16 +185,14 @@ def get_radiance(img, transmission, atmosphere):
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('MVI_0234_Cap1.png'))/255
+	img = double(cv2.imread('GOPR0550.JPG'))/255
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('MVI_0234_Cap1.png')
+	imgOriginal = cv2.imread('GOPR0550.JPG')
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
 	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
-
-	print imgOriginal.dtype 
 
 	#-----Tamanyo de la Imagen----------------------------------------------------
 	filas,columnas,canales = img.shape
@@ -204,7 +201,7 @@ if __name__ == '__main__':
 	omega = 0.95	#Parametro usado para conservar una minima cantidad de haze en la imagen para...  
 					#...efectos de profundidad. Rango entre 0 y 1. Transmission Estimate
 	tamanyo = 15	#Tamanyo del parche local (bloque) centrado un cierto pixel x. Dark-Channel Prior
-	radius = 50		#Tamanyo del bloque para el Guided Filter
+	radius = 150	#Tamanyo del bloque para el Guided Filter
 	eps = 0.001		#Parametro de regularizacion (llamado en el paper epsilon). Para el Guided Filter
 
 	#-----Llamado a Funciones----------------------------------------------------
@@ -217,18 +214,18 @@ if __name__ == '__main__':
 
 
 	#-----Resultados----------------------------------------------------
-	cv2.namedWindow('darkChannel',cv2.WINDOW_NORMAL)
-	cv2.imshow('darkChannel', dark_channel)
-	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
-	cv2.imshow('atmosphere', atmosphere)
-	cv2.namedWindow('transEst',cv2.WINDOW_NORMAL)
-	cv2.imshow('transEst', trans_est)
-	cv2.namedWindow('Filtro',cv2.WINDOW_NORMAL)
-	cv2.imshow('Filtro', filtro)
-	cv2.namedWindow('transmision',cv2.WINDOW_NORMAL)
-	cv2.imshow('transmision', transmission)
-	cv2.namedWindow('radianciaOriginal',cv2.WINDOW_NORMAL)
-	cv2.imshow('radianciaOriginal', radiance)
+#	cv2.namedWindow('darkChannel',cv2.WINDOW_NORMAL)
+#	cv2.imshow('darkChannel', dark_channel)
+#	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
+#	cv2.imshow('atmosphere', atmosphere)
+#	cv2.namedWindow('transEst',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transEst', trans_est)
+#	cv2.namedWindow('Filtro',cv2.WINDOW_NORMAL)
+#	cv2.imshow('Filtro', filtro)
+#	cv2.namedWindow('transmision',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transmision', transmission)
+#	cv2.namedWindow('radianciaOriginal',cv2.WINDOW_NORMAL)
+#	cv2.imshow('radianciaOriginal', radiance)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
 	radianceNew = cv2.resize(radiance,None, fx=1.25,fy=1.25,interpolation=cv2.INTER_CUBIC)
@@ -238,12 +235,12 @@ if __name__ == '__main__':
 
 	#-----Separacion de canales RGB-----------------------------------------------
 	Rrec, Grec, Brec = cv2.split(imgRecuperada)
-	cv2.namedWindow('canalRojo',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalRojo', Rrec)
-	cv2.namedWindow('canalVerde',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalVerde', Grec)
-	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalAzul', Brec)
+#	cv2.namedWindow('canalRojo',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalRojo', Rrec)
+#	cv2.namedWindow('canalVerde',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalVerde', Grec)
+#	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalAzul', Brec)
 
 
 	#-----Comparaciones---------------------------------------------------------
@@ -257,16 +254,16 @@ if __name__ == '__main__':
 	radiance_yrb = cv2.cvtColor(imgRecuperada, cv2.COLOR_BGR2YCR_CB)		#radiance_yrb = cv2.cvtColor(radiance, cv2.COLOR_BGR2YCrCb)
 	Yrec, Crrec, Cbrec = cv2.split(radiance_yrb)
 
-	cv2.namedWindow('img YCrCb',cv2.WINDOW_NORMAL)
-	cv2.imshow('img YCrCb', YOri)
-	cv2.namedWindow('radiancia img YCrCb',cv2.WINDOW_NORMAL)
-	cv2.imshow('radiancia img YCrCb', Yrec)
+#	cv2.namedWindow('img YCrCb',cv2.WINDOW_NORMAL)
+#	cv2.imshow('img YCrCb', YOri)
+#	cv2.namedWindow('radiancia img YCrCb',cv2.WINDOW_NORMAL)
+#	cv2.imshow('radiancia img YCrCb', Yrec)
 
 	YOri_32bits = np.float32(YOri)
 	Yrec_32bits = np.float32(Yrec)
 	resta = cv2.subtract(YOri_32bits,Yrec_32bits)
-	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
-	cv2.imshow('Resta', resta)
+#	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
+#	cv2.imshow('Resta', resta)
 
 
 	#-----Calculo de Histograma----------------------------------------------------
@@ -275,40 +272,85 @@ if __name__ == '__main__':
 	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
 	del algoritmo
 	'''
-	color = ('b','g','r')
-	for i, col in enumerate(color):
-	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
-	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
-	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
-	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
-	   
-	   cv2.normalize(histcolorOriginal,histcolorOriginal,8,cv2.NORM_MINMAX)
-	   cv2.normalize(histcolorOriginal_Y,histcolorOriginal_Y,8,cv2.NORM_MINMAX)
-	   cv2.normalize(histcolorRecuperada,histcolorRecuperada,8,cv2.NORM_MINMAX)
-	   cv2.normalize(histcolorRecuperada_Y,histcolorRecuperada_Y,8,cv2.NORM_MINMAX)
+#	color = ('b','g','r')
+#	for i, col in enumerate(color):
+#	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
+#	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
+#	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
+#	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
 
-	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
-	   plt.title('Histograma Original')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlim([0,256])
+#	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
+#	   plt.title('Histograma Original')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlim([0,256])
 
-	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
-	   plt.title('Histograma Luminancia Original')
-	   plt.xlim([0,256])
+#	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
+#	   plt.title('Histograma Luminancia Original')
+#	   plt.xlim([0,256])
 
-	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
-	   plt.title('Histograma Recuperada')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlabel('Bins')
-	   plt.xlim([0,256])
+#	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
+#	   plt.title('Histograma Recuperada')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlabel('Bins')
+#	   plt.xlim([0,256])
 
-	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
-	   plt.title('Histograma Luminancia Recuperada')
-	   plt.xlabel('Bins')
-	   plt.xlim([0,256])
+#	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
+#	   plt.title('Histograma Luminancia Recuperada')
+#	   plt.xlabel('Bins')
+#	   plt.xlim([0,256])
 
+#	plt.show()
+
+	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
+	'''
+	Se realizan 3 tipos de analisis de la imagen resultante:
+	Espectro Frecuencial
+	Entropia
+	Deteccion de features
+	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
+	submarinas
+	'''
+
+	#Espectro Frecuencial
+	IMG = cv2.imread('GOPR0550.JPG',0)
+	IMGRec = cv2.imread('imagenRecuperadaDehaze.jpg',0)
+	img32 = np.float32(IMG)
+	imgRec32 = np.float32(IMGRec)
+
+	row,col = np.shape(img32)
+
+	fourier32 = np.fft.fft2(img32)/float(row*col)
+	fourierShift32 = np.fft.fftshift(fourier32)
+	mod_fourier32 = np.abs(fourierShift32)
+
+	max_mod_fourier32 = np.max(mod_fourier32)
+	thresh32 = max_mod_fourier32/1000
+	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
+	tam_thresh_fourier32 = np.size(thresh_fourier32)
+
+	iqm32 = tam_thresh_fourier32/(float(row*col))
+
+	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
+	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
+	mod_fourierRec32 = np.abs(fourierShiftRec32)
+
+	max_mod_fourierRec32 = np.max(mod_fourierRec32)
+	threshRec32 = max_mod_fourierRec32/1000
+	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
+	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
+
+	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
+
+	print iqm32
+	print iqmRec32
+
+	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
+	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
+	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
+	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
+	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
+	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
-
