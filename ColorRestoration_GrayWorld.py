@@ -449,8 +449,18 @@ if __name__ == '__main__':
 	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
 
-	cv2.waitKey()
-	cv2.destroyAllWindows()
+	#Entropia de la imagen a partir del histograma de grises de la iamgen
+	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
+	histIMG = histogramIMG.sum()
+	probIMG = [float(h)/histIMG for h in histogramIMG]
+	entropyIMG = -np.sum([p*np.log2(p) for p in probIMG if p !=0])
+	print entropyIMG
+
+	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
+	histIMGRec = histogramIMGRec.sum()
+	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
+	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
+	print entropyIMGRec
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
