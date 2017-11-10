@@ -26,6 +26,9 @@ import numpy as np
 import cv2
 from numpy import *
 from matplotlib import pyplot as plt
+import argparse
+import os
+
 
 
 #-----Funciones a Implementar-----------------------------------------------------
@@ -161,6 +164,10 @@ def get_guidedfilter (img, trans_est, radius, eps):
 
 	return guidedFilter
 
+import argparseimport argparse
+import os
+
+import os
 
 def get_radiance(img, transmission, atmosphere):
 	'''
@@ -184,15 +191,23 @@ def get_radiance(img, transmission, atmosphere):
 
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
+	#Constuccion del parse y del argumento
+	ap = argparse.ArgumentParser()
+	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
+	args = vars(ap.parse_args())
+	
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('GOPR0550.JPG'))/255
+	img = double(cv2.imread(args["image"]))/255
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('GOPR0550.JPG')
+	imgOriginal = cv2.imread(args["image"])
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
 	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
+	
+	#-------------------Creacion del archivo--------------------------
+	f = open('img_txt.txt','a')	#Archivo para colocar los resultados de los análisis cuantitativos. Sera append
 
 	#-----Tamanyo de la Imagen----------------------------------------------------
 	filas,columnas,canales = img.shape
@@ -312,7 +327,7 @@ if __name__ == '__main__':
 	'''
 
 	#Espectro Frecuencial
-	IMG = cv2.imread('GOPR0550.JPG',0)
+	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaDehaze.jpg',0)
 	img32 = np.float32(IMG)
 	imgRec32 = np.float32(IMGRec)
@@ -365,5 +380,10 @@ if __name__ == '__main__':
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
 	print entropyIMGRec
 
+	#-----Escritura del archivo con los resultados----------------------------------------------
+	#Con write()
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.close()
+	
 	cv2.waitKey()
 	cv2.destroyAllWindows()
