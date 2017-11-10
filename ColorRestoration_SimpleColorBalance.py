@@ -17,8 +17,10 @@ Modulo implementado en Python
 import cv2
 import math
 import numpy as np
-import sys
+#import sys
 from matplotlib import pyplot as plt
+import argparse
+import os
 
 #-----Funciones a Implementar-----------------------------------------------------
 def apply_mask(matrix, mask, fill_value):
@@ -30,7 +32,6 @@ def apply_mask(matrix, mask, fill_value):
 	El orden de ejecucion es Blue, Green, Red
 	'''
 	masked = np.ma.array(matrix,mask=mask,fill_value=fill_value)
-#	cv2.imshow("Masked", masked)
 	return masked.filled()
 
 
@@ -44,11 +45,9 @@ def apply_threshold(matrix, low_value, high_value):
 	'''
 	low_mask = matrix<low_value
 	matrix = apply_mask(matrix,low_mask,low_value)
-#	cv2.imshow("MatrixL", matrix)
 
 	high_mask = matrix>high_value
 	matrix = apply_mask(matrix,high_mask,high_value)
-#	cv2.imshow("MatrixH", matrix)
 
 	return matrix
 
@@ -98,14 +97,21 @@ def sColorBalance(img, porcentaje):
 		thresholded = apply_threshold(canal,bajo_val,alto_val)
 		# scale the canal
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
-#		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
 
 	return cv2.merge(salida_canales)
 
 
 if __name__ == '__main__':
-	imgOriginal = cv2.imread('GOPR0535_Cap_0004.jpg')
+	#Constuccion del parse y del argumento
+	ap = argparse.ArgumentParser()
+	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
+	args = vars(ap.parse_args())
+
+	imgOriginal = cv2.imread(args["image"])
+
+	#-------------------Creacion del archivo--------------------------
+	f = open('img_txt.txt','a') #Archivo para colocar los resultados de los análisis cuantitativos. Sera append
 
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(imgOriginal, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
@@ -155,8 +161,10 @@ if __name__ == '__main__':
 	'''
 
 	#Espectro Frecuencial
-	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaCR_RGB.jpg',0)
+#	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
+#	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	img32 = np.float32(IMG)
 	imgRec32 = np.float32(IMGRec)
 
@@ -194,7 +202,8 @@ if __name__ == '__main__':
 	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
 	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
-	
+
+
 	#Entropia de la imagen a partir del histograma de grises de la iamgen
 	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
 	histIMG = histogramIMG.sum()
@@ -207,6 +216,11 @@ if __name__ == '__main__':
 	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
 	print entropyIMGRec
+
+	#-----Escritura del archivo con los resultados----------------------------------------------
+	#Con write()
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.close()
 
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
