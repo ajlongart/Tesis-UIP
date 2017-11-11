@@ -20,9 +20,9 @@ Variacion del Simple Color Balance (en RGB) de DavidYKay: https://gist.github.co
 import cv2
 import math
 import numpy as np
-import sys
 from matplotlib import pyplot as plt
-from matplotlib import colors
+import argparse
+import os
 
 #-----Funciones a Implementar-----------------------------------------------------
 def apply_mask(matrix, mask, fill_value):
@@ -34,9 +34,6 @@ def apply_mask(matrix, mask, fill_value):
 	El orden de ejecucion es Hue, Saturation, Value
 	'''
 	masked = np.ma.array(matrix,mask=mask,fill_value=fill_value)
-	cv2.imshow("Masked", masked)
-	cv2.imshow("MaskFill", masked.filled())
-	cv2.imshow("MaskedFill", masked.filled([0]))
 	return masked.filled()
 
 
@@ -50,11 +47,9 @@ def apply_threshold(matrix, low_value, high_value):
 	'''
 	low_mask = matrix<low_value
 	matrix = apply_mask(matrix,low_mask,low_value)
-	cv2.imshow("MatrixL", matrix)
 
 	high_mask = matrix>high_value
 	matrix = apply_mask(matrix,high_mask,high_value)
-	cv2.imshow("MatrixH", matrix)
 
 	return matrix
 
@@ -76,10 +71,6 @@ def sColorBalance(img_hsv, porcentaje):
 
 	mitad_porcentaje = porcentaje/200.0
 	canales = cv2.split(img_hsv)		#Separa los canales en HSV
-	
-	cv2.imshow("h", canales[0])
-	cv2.imshow("s", canales[1])
-	cv2.imshow("v", canales[2])
 
 	salida_canales = []
 	for canal in canales:
@@ -107,19 +98,24 @@ def sColorBalance(img_hsv, porcentaje):
 		thresholded = apply_threshold(canal,bajo_val,alto_val)
 		# scale the canal
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
-		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
-		cv2.imshow("zsrfag", salida_canales[0])
-		print normalized.shape
 		norm_tile = np.tile(normalized[:,:,np.newaxis],(1,1,3))
-		print norm_tile.shape
 	
 		
-	return cv2.merge(salida_canales)	#norm_tile
+	return cv2.merge(salida_canales)
 
 
 if __name__ == '__main__':
-	imgOriginal = cv2.imread('GOPR0535_Cap_0004.jpg')
+	#Constuccion del parse y del argumento
+	ap = argparse.ArgumentParser()
+	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
+	args = vars(ap.parse_args())
+
+	imgOriginal = cv2.imread(args["image"])
+
+	#-------------------Creacion del archivo--------------------------
+	f = open('img_txt.txt','a') #Tambien sirve open('img_txt.txt')  Archivo para colocar los resultados de los análisis cuantitativos. Sera append
+
 	img_hsv = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2HSV) 		#Conversion de HSV de la imagen original a HSV
 
 	#-----Llamado a Funcion----------------------------------------------------
@@ -194,8 +190,10 @@ if __name__ == '__main__':
 	'''
 
 	#Espectro Frecuencial
-	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaCR_HSV_RGB.jpg',0)
+#	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
+#	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	img32 = np.float32(IMG)
 	imgRec32 = np.float32(IMGRec)
 
@@ -233,7 +231,8 @@ if __name__ == '__main__':
 	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
 	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
-	
+
+
 	#Entropia de la imagen a partir del histograma de grises de la iamgen
 	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
 	histIMG = histogramIMG.sum()
@@ -246,6 +245,11 @@ if __name__ == '__main__':
 	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
 	print entropyIMGRec
+
+	#-----Escritura del archivo con los resultados----------------------------------------------
+	#Con write()
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.close()
 	
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
