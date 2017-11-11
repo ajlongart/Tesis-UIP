@@ -1,15 +1,17 @@
 #!/usr/bin/env python
 '''
 Modulo 2 Toolbox
-Color Restoration with Simplest Color Balance
+Color Restoration with Gray World assumption (GWa)
 Tesis Underwater Image Pre-processing
 Armando Longart 10-10844
 ajzlongart@gmail.com
 
 Descripcion: Modulo implementado para mejorar el color de las imagenes
-subacuaticas...
+subacuaticas basado en el GWa. Se fundamenta en...
 
-Modificacion del algoritmo dark-channel prior...
+Modificacion del algoritmo dark-channel prior en cuanto aplica el Dehazing
+en los canales GB mientras que el canal rojo se recupera el color por medio
+del GWa
 
 Para este algoritmo se basa en la ecuacion de la imagen con haze
 I(x) = J(x)t(x)+A[1-t(x)]
@@ -186,92 +188,62 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 	'''	
 	bimg,gimg,rimg = cv2.split(img)
 	filas,columnas,canales = img.shape
-#	print rimg
 
 	#A partir de (avgRed+avgBlue+avgGreen)/3 = 0.5, se llega a:
 	avgGreen = np.mean(np.mean(radiance_gOri))
 	avgBlue = np.mean(np.mean(radiance_bOri))
-	print ('avgBlue:')
-	print avgBlue
-	print ('avgGreen:')
-	print avgGreen
 
-	MAX_avgBlue = np.max(radiance_bOri)
-	print ('MAX_avgBlue:')
-	print MAX_avgBlue
+	MAX_avgBlue = np.max(radiance_bOri)	
 	min_avgBlue = np.min(radiance_bOri)
-	min_avgBlue = np.absolute(min_avgBlue)
-	print ('min_avgBlue:')
-	print min_avgBlue
+#	min_avgBlue = np.absolute(min_avgBlue)
 
 	MAX_avgGreen = np.max(radiance_gOri)
-	print ('MAX_avgGreen:')
-	print MAX_avgGreen
 	min_avgGreen = np.min(radiance_gOri)
-	min_avgGreen = np.absolute(min_avgGreen)
-	print ('min_avgGreen:')
-	print min_avgGreen
+#	min_avgGreen = np.absolute(min_avgGreen)
 
 	nor_avgBlue = (avgBlue-min_avgBlue)/(MAX_avgBlue-min_avgBlue)
-
 #	nor_avgBlue = np.absolute(nor_avgBlue)
-	print ('nor_avgBlue:')
-	print nor_avgBlue
+
 	nor_avgGreen = (avgGreen-min_avgGreen)/(MAX_avgGreen-min_avgGreen)
 #	nor_avgGreen = np.absolute(nor_avgGreen)
-	print ('nor_avgGreen:')
-	print nor_avgGreen
 
 	nor_avgRed = 1.5-nor_avgBlue-nor_avgGreen
-	print ('nor_avgRed:')
-	print nor_avgRed
 
 	avgR = np.mean(np.mean(rimg))
-	print ('avgR:')
-	print avgR
 
 	MAX_avgR = np.max(rimg)
-	print ('MAX_avgR:')
-	print MAX_avgR
 	min_avgR = np.min(rimg)
-	print ('min_avgR:')
-	print min_avgR
 
 	nor_avgR = (avgR-min_avgR)/(MAX_avgR-min_avgR)
-	print ('nor_avgR:')
-	print nor_avgR
 
 	delta = nor_avgRed/nor_avgR
-	print ('delta:')
-	print delta
 
-	nor_R = np.zeros((filas,columnas))
-	nor_G = np.zeros((filas,columnas))
-	nor_B = np.zeros((filas,columnas))
-
-	nor_R = cv2.normalize(rimg,nor_R,0,255,cv2.NORM_MINMAX)
-	nor_G = cv2.normalize(radiance_gOri,nor_G,0,255,cv2.NORM_MINMAX)
-	nor_B = cv2.normalize(radiance_bOri,nor_B,0,255,cv2.NORM_MINMAX)
-#	print nor_R
-#	print nor_G
 	radiance_rOri = rimg*delta
 
-	img_merge = cv2.merge((radiance_bOri,radiance_gOri,radiance_rOri)) #Considerar tambien el GWa: radiance_rOri
+	img_merge = cv2.merge((radiance_bOri,radiance_gOri,radiance_rOri)) 
 
 	return img_merge
 
 
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
+	#Constuccion del parse y del argumento
+	ap = argparse.ArgumentParser()
+	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
+	args = vars(ap.parse_args())
+
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('IMG_2388.jpg'))/255 #/255	# 'DSC01369.jpg' 
+	img = double(cv2.imread(args["image"]))/255 #/255	# 'DSC01369.jpg' 
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('IMG_2388.jpg')
+	imgOriginal = cv2.imread(args["image"])
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
 	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
+
+	#-------------------Creacion del archivo--------------------------
+	f = open('img_txt.txt','a') #Tambien sirve open('img_txt.txt') Archivo para colocar los resultados de los análisis cuantitativos. Sera append
 
 	#-----Separar los canales de la Imagen----------------------------------------------------
 	bOri, gOri, rOri = cv2.split(img)
@@ -409,7 +381,7 @@ if __name__ == '__main__':
 	'''
 
 	#Espectro Frecuencial
-	IMG = cv2.imread('GOPR0535_Cap_0004.jpg',0)
+	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaDehazeGW.jpg',0)
 	img32 = np.float32(IMG)
 	imgRec32 = np.float32(IMGRec)
@@ -461,6 +433,11 @@ if __name__ == '__main__':
 	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
 	print entropyIMGRec
+
+	#-----Escritura del archivo con los resultados----------------------------------------------
+	#Con write()
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.close()
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
