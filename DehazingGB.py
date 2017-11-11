@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 '''
 Modulo 2 Toolbox
-Color Restoration with Simplest Color Balance
+Color Restoration with Dehazing GB
 Tesis Underwater Image Pre-processing
 Armando Longart 10-10844
 ajzlongart@gmail.com
 
 Descripcion: Modulo implementado para mejorar el color de las imagenes
-subacuaticas. Esta basado en el Dehazing para los canales B y G mientras
-que para el canal R se realiza una correcion mediante el algoritmo de 
-Gray World assumption (GWa). Este algoritmo establece que...
+subacuaticas. Esta basado en el Dehazing RGB con la salvedad que solo
+aplica el algoritmo para los canales B y G. Esto se debe a que en las 
+imagenes submarinas el efecto del haze esta presente solamente en los 
+canales G y B y no en el R.
 
 Modificacion del algoritmo dark-channel prior...
 
@@ -27,6 +28,8 @@ import numpy as np
 import cv2
 from numpy import *
 from matplotlib import pyplot as plt
+import argparse
+import os
 
 
 
@@ -185,15 +188,23 @@ def get_radiance(img, transmission, atmosphere):
 
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
+	#Constuccion del parse y del argumento
+	ap = argparse.ArgumentParser()
+	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
+	args = vars(ap.parse_args())
+
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread('IMG_2468.jpg'))/255 #/255	# 'DSC01369.jpg' 
+	img = double(cv2.imread(args["image"]))/255 #/255	
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
-	imgOriginal = cv2.imread('IMG_2468.jpg')
+	imgOriginal = cv2.imread(args["image"])
 	##Para reduccion, se usa Area. Para amplicacion, (Bi)Cubica INTER_CUBIC
 	img = cv2.resize(img,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
+
+	#-------------------Creacion del archivo--------------------------
+	f = open('img_txt.txt','a') 	#Archivo para colocar los resultados de los análisis cuantitativos. Sera append
 
 	#-----Separar los canales de la Imagen----------------------------------------------------
 	bOri, gOri, rOri = cv2.split(img)
@@ -221,6 +232,7 @@ if __name__ == '__main__':
 	radiance_gOri = get_radiance(gOri, transmission_gOri, BgOri)
 
 	img_merge = cv2.merge((radiance_bOri,radiance_gOri,rOri))
+
 
 
 	#-----Resultados----------------------------------------------------
@@ -263,7 +275,6 @@ if __name__ == '__main__':
 	cv2.imshow('canalVerde', Grec)
 	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
 	cv2.imshow('canalAzul', Brec)
-
 
 	#-----Comparaciones---------------------------------------------------------
 	'''
@@ -333,7 +344,7 @@ if __name__ == '__main__':
 	'''
 
 	#Espectro Frecuencial
-	IMG = cv2.imread('IMG_2468.jpg',0)
+	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaDehazeGB.jpg',0)
 #	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 #	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
@@ -389,5 +400,10 @@ if __name__ == '__main__':
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
 	print entropyIMGRec
 
+	#-----Escritura del archivo con los resultados----------------------------------------------
+	#Con write()
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.close()
+	
 	cv2.waitKey()
 	cv2.destroyAllWindows()
