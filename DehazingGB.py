@@ -32,7 +32,6 @@ import argparse
 import os
 
 
-
 #-----Funciones a Implementar-----------------------------------------------------
 def maxImagen(img, tamMax):
 	''''''
@@ -185,7 +184,6 @@ def get_radiance(img, transmission, atmosphere):
 	return radiance
 
 
-
 if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
 	#Constuccion del parse y del argumento
@@ -204,7 +202,7 @@ if __name__ == '__main__':
 	cv2.imshow("img",imgOriginal)
 
 	#-------------------Creacion del archivo--------------------------
-	f = open('img_txt.txt','a') 	#Archivo para colocar los resultados de los análisis cuantitativos. Sera append
+	f = open('img_txt.txt','a') 	#Archivo para colocar los resultados de los analisis cuantitativos. Sera append
 
 	#-----Separar los canales de la Imagen----------------------------------------------------
 	bOri, gOri, rOri = cv2.split(img)
@@ -386,15 +384,16 @@ if __name__ == '__main__':
 	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
 	plt.show()
 
-
 	#Entropia de la imagen a partir del histograma de grises de la iamgen
 	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
+	cv2.normalize(histogramIMG,histogramIMG,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 	histIMG = histogramIMG.sum()
 	probIMG = [float(h)/histIMG for h in histogramIMG]
 	entropyIMG = -np.sum([p*np.log2(p) for p in probIMG if p !=0])
 	print entropyIMG
 
 	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
+	cv2.normalize(histogramIMGRec,histogramIMGRec,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
 	histIMGRec = histogramIMGRec.sum()
 	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
 	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
@@ -402,7 +401,7 @@ if __name__ == '__main__':
 
 	#-----Escritura del archivo con los resultados----------------------------------------------
 	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t DehazingGB \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
 	f.close()
 	
 	cv2.waitKey()
