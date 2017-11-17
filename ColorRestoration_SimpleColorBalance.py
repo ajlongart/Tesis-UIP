@@ -111,7 +111,7 @@ if __name__ == '__main__':
 	imgOriginal = cv2.imread(args["image"])
 
 	#-------------------Creacion del archivo--------------------------
-	f = open('img_txt.txt','a') #Archivo para colocar los resultados de los análisis cuantitativos. Sera append
+	f = open('img_txt.txt','a') #Archivo para colocar los resultados de los analisis cuantitativos. Sera append
 
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(imgOriginal, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
@@ -163,8 +163,8 @@ if __name__ == '__main__':
 	#Espectro Frecuencial
 	IMG = cv2.imread(args["image"],0)
 	IMGRec = cv2.imread('imagenRecuperadaCR_RGB.jpg',0)
-#	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
-#	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
+#	IMG = cv2.resize(IMG, (1024, 768))
+#	IMGRec = cv2.resize(IMGRec, (1024, 768))
 	img32 = np.float32(IMG)
 	imgRec32 = np.float32(IMGRec)
 
@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
 	#-----Escritura del archivo con los resultados----------------------------------------------
 	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t RGBStretch \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
 	f.close()
 
 	cv2.waitKey(0)
