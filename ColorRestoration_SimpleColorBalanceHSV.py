@@ -250,7 +250,7 @@ if __name__ == '__main__':
 
 	#-----Escritura del archivo con los resultados----------------------------------------------
 	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t DehazingGWa \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
+	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t HSVStretch \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
 	f.close()
 
 	cv2.waitKey(0)
