@@ -11,7 +11,7 @@ Tesis Underwater Image Pre-processing
 Armando Longart 10-10844
 ajzlongart@gmail.com
 
-Descripcion: Modulo desarrollado para la detección de features de las imagenes 
+Descripcion: Modulo desarrollado para la deteccion de features de las imagenes 
 usadas en la tesis. Se usaran 4 tipos de features (SIFT, SURF, ORB y KAZE) los 
 cuales seran aplicadas a las imagenes originales y recuperadas. De este modulo
 se generan archivos con la cantidad de features detectados (para cada tipo de
@@ -57,7 +57,7 @@ cv2.imshow("imgSIFT", img1)
 #Write in the created file the coordinates X y Y of the image
 for i_sift,keypoint_sift in enumerate(kps):
     #print "Keypoint %d: %s" % (i, keypoint.pt)
-    fimgSIFT.write('%s \t %s \n' %(i_sift, keypoint_sift.pt))
+    fimgSIFT.write('%d \t %d \t %d \n' %(i_sift, keypoint_sift.pt[0], keypoint_sift.pt[1]))
 fimgSIFT.close()
 
 #-------------------Algoritmo SURF--------------------------
@@ -77,12 +77,12 @@ cv2.imshow("imgSURF", imgf)
 
 #Write in the created file the coordinates X y Y of the image
 for i_surf,keypoint_surf in enumerate(kpf):
-    fimgSURF.write('%s \t %s \n' %(i_surf, keypoint_surf.pt))
+    fimgSURF.write('%d \t %d \t %d \n' %(i_surf, keypoint_surf.pt[0], keypoint_surf.pt[1]))
 fimgSURF.close()
 
 #-------------------Algoritmo ORB--------------------------
 #Initiate ORB detector
-orb = cv2.ORB_create()
+orb = cv2.ORB_create(nfeatures=500000, scoreType=cv2.ORB_FAST_SCORE)
 
 #Find the keypoints with ORB
 kpo = orb.detect(gray1,None)
@@ -100,7 +100,7 @@ cv2.imshow("imgORB", imgo)
 
 #Write in the created file the coordinates X y Y of the image
 for i_orb,keypoint_orb in enumerate(kpo):
-    fimgORB.write('%s \t %s \n' %(i_orb, keypoint_orb.pt))
+    fimgORB.write('%d \t %d \t %d \n' %(i_orb, keypoint_orb.pt[0], keypoint_orb.pt[1]))
 fimgORB.close()
 
 #-------------------Algoritmo KAZE--------------------------
@@ -123,7 +123,7 @@ cv2.imshow("imgKAZE", imgk)
 
 #Write in the created file the coordinates X y Y of the image 
 for i_kaze,keypoint_kaze in enumerate(kpk):
-    fimgKAZE.write('%s \t %s \n' %(i_kaze, keypoint_kaze.pt))
+    fimgKAZE.write('%d \t %d \t %d \n' %(i_kaze, keypoint_kaze.pt[0], keypoint_kaze.pt[1]))
 fimgKAZE.close()
 
 #-----Escritura del archivo con los resultados----------------------------------------------
