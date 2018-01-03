@@ -32,6 +32,23 @@ def click_and_crop(event, x, y, flags, param):
 		# draw a rectangle around the region of interest
 		cv2.rectangle(frame, refPt[0], refPt[1], (0, 255, 0), 2)
 		cv2.imshow("image", frame)
+
+def applyFFT(frames): 
+	fps = 30 	#SampleLength
+	n = frames.shape[0]
+	t = np.linspace(0,float(n)/fps, n)
+	disp = frames.mean(axis = 0)
+	y = frames - disp
+
+	k = np.arange(n)
+	T = n/fps
+	frq = k/T # two sides frequency range
+	freqs = frq[range(n/2)] # one side frequency range
+
+	Y = np.fft.fft(y, axis=0)/n # fft computing and normalization
+	signals = Y[range(n/2), :,:]
+
+	return signals	#freqs,
     
 if __name__ == '__main__':
 	#Constuccion del parse y del argumento
@@ -66,6 +83,16 @@ if __name__ == '__main__':
 	    	roi = copyCrop[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
 	    	cv2.imshow("ROI", roi)
 
+	    	fft_roi = applyFFT(roi)
+	    	fshift = np.fft.fftshift(fft_roi)
+	    	magnitude_spectrum = 20*np.log(np.abs(fshift))
+	    	print magnitude_spectrum
+
+	    	plt.imshow(magnitude_spectrum)
+	    	plt.title('Magnitude Spectrum')
+	    	plt.xticks([]), plt.yticks([])
+		
+		plt.show()
 	
 	    if cv2.waitKey(1) & 0xFF == ord('q'):
 	        break
