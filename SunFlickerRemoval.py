@@ -33,22 +33,23 @@ def click_and_crop(event, x, y, flags, param):
 		cv2.rectangle(frame, refPt[0], refPt[1], (0, 255, 0), 2)
 		cv2.imshow("image", frame)
 
-def applyFFT(frames): 
-	fps = 30 	#SampleLength
-	n = frames.shape[0]
+def applyFFT(frames): #https://github.com/rohanraja/respivision/blob/master/fft.py
+	fps = 100 	#SampleLength https://github.com/rohanraja/respivision/blob/master/parameters.py
+	n = frame_gray.shape[0]
 	t = np.linspace(0,float(n)/fps, n)
-	disp = frames.mean(axis = 0)
-	y = frames - disp
+	disp = frame_gray.mean(axis = 0)
+	y = frame_gray - disp
 
 	k = np.arange(n)
 	T = n/fps
 	frq = k/T # two sides frequency range
 	freqs = frq[range(n/2)] # one side frequency range
+	print freqs.shape
 
 	Y = np.fft.fft(y, axis=0)/n # fft computing and normalization
-	signals = Y[range(n/2), :,:]
+	signals = Y[range(n/2), :]
 
-	return signals	#freqs,
+	return signals, freqs
     
 if __name__ == '__main__':
 	#Constuccion del parse y del argumento
@@ -65,17 +66,14 @@ if __name__ == '__main__':
 	while(video.isOpened()):
 	    ret, frame = video.read()
 	
+	    #cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
+	    #cv2.imshow('frame',frame)
+
+	    frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 	    cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
-	    cv2.imshow('frame',frame)
+	    cv2.imshow('frame',frame_gray)
 
-	    frameCopy = frame.copy()
-	    hsv = cv2.cvtColor(frameCopy, cv2.COLOR_BGR2HSV)
-
-	    cv2.namedWindow('framehsv',cv2.WINDOW_NORMAL)
-	    cv2.imshow('framehsv',hsv)
-
-	    copyCrop = frame.copy()
-	    #imgCrop = copyCrop[100:800,100:500]
+	    copyCrop = frame_gray.copy()
 
 	    cv2.setMouseCallback("frame", click_and_crop)
 
@@ -83,16 +81,18 @@ if __name__ == '__main__':
 	    	roi = copyCrop[refPt[0][1]:refPt[1][1], refPt[0][0]:refPt[1][0]]
 	    	cv2.imshow("ROI", roi)
 
-	    	fft_roi = applyFFT(roi)
+	    	fft_roi, freq = applyFFT(roi)
 	    	fshift = np.fft.fftshift(fft_roi)
 	    	magnitude_spectrum = 20*np.log(np.abs(fshift))
 	    	print magnitude_spectrum
 
-	    	plt.imshow(magnitude_spectrum)
+	    	plt.imshow(magnitude_spectrum,freq)
 	    	plt.title('Magnitude Spectrum')
 	    	plt.xticks([]), plt.yticks([])
-		
-		plt.show()
+
+	    	plt.show()
+
+	    	continue
 	
 	    if cv2.waitKey(1) & 0xFF == ord('q'):
 	        break
