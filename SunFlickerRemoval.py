@@ -3,6 +3,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 import argparse
 
+import scipy
+import scipy.fftpack
+import pylab
+
 # built-in module
 import sys
 
@@ -34,20 +38,14 @@ def click_and_crop(event, x, y, flags, param):
 		cv2.imshow("image", frame)
 
 def applyFFT(frames): #https://github.com/rohanraja/respivision/blob/master/fft.py
-	fps = 100 	#SampleLength https://github.com/rohanraja/respivision/blob/master/parameters.py
-	n = frame_gray.shape[0]
+	fps = 100	#SampleLength https://github.com/rohanraja/respivision/blob/master/parameters.py
+	n = roi.shape[0]
 	t = np.linspace(0,float(n)/fps, n)
-	disp = frame_gray.mean(axis = 0)
-	y = frame_gray - disp
 
-	k = np.arange(n)
-	T = n/fps
-	frq = k/T # two sides frequency range
-	freqs = frq[range(n/2)] # one side frequency range
-	print freqs.shape
-
-	Y = np.fft.fft(y, axis=0)/n # fft computing and normalization
-	signals = Y[range(n/2), :]
+	signal = abs(scipy.fft(roi[0]))
+	freqs = scipy.fftpack.fftfreq(roi[0].size, t[1]-t[0])
+	freqs = scipy.fftpack.fftshift(freqs)
+	signals = scipy.fftpack.fftshift(signal)
 
 	return signals, freqs
     
@@ -82,15 +80,10 @@ if __name__ == '__main__':
 	    	cv2.imshow("ROI", roi)
 
 	    	fft_roi, freq = applyFFT(roi)
-	    	fshift = np.fft.fftshift(fft_roi)
-	    	magnitude_spectrum = 20*np.log(np.abs(fshift))
-	    	print magnitude_spectrum
-
-	    	plt.imshow(magnitude_spectrum,freq)
-	    	plt.title('Magnitude Spectrum')
-	    	plt.xticks([]), plt.yticks([])
-
-	    	plt.show()
+		
+	    	pylab.plot(freq,20*np.log10(fft_roi))
+	    	pylab.grid()
+	    	pylab.show()
 
 	    	continue
 	
