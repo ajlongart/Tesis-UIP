@@ -27,26 +27,27 @@ import numpy as np
 import cv2
 from numpy import *
 from matplotlib import pyplot as plt
-
+import argparse
+import os
 
 
 #-----Funciones a Implementar-----------------------------------------------------
-def maxImagen(img, tamanyo):
+def maxImagen(img, tamMax):
 	''''''
 	bOri, gOri, rOri = cv2.split(img)
 	filas,columnas,canales = img.shape
-	#pad_size = tamanyo/2
-	#padded_max = np.pad(img, (pad_size, pad_size),'constant',constant_values=np.inf)
+
 	max_channel = np.zeros((filas,columnas))
 	for r in range(1,filas):
 		for c in range(1,columnas):
-			window_b = bOri[r:r+tamanyo,c:c+tamanyo]
-			window_g = gOri[r:r+tamanyo,c:c+tamanyo]
-			window_r = rOri[r:r+tamanyo,c:c+tamanyo]
+			window_b = bOri[r:r+tamMax,c:c+tamMax]
+			window_g = gOri[r:r+tamMax,c:c+tamMax]
+			window_r = rOri[r:r+tamMax,c:c+tamMax]
 			max_bg = np.max(window_b+window_g)
 			max_r = np.max(window_r)
 			max_ch = max_r-max_bg		#(max_r-max_bg)+np.absolute(np.min(max_r-max_bg))
 			max_ch_array = np.array([max_ch])
+
 			max_channel[r,c] = max_ch_array
 
 	min_max_channel = np.min(max_channel)
@@ -79,6 +80,7 @@ def get_dark_channel(img, tamanyo):
 	(en el espacio de color RGB, padded_img) y el otro es un filtro minimo: dark_channel
 	'''		
 	return dark_channel
+
 
 def get_transmission_estimate(img, atmosphere, omega, tamanyo):
 	'''
@@ -193,17 +195,16 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 	avgGreen = np.mean(np.mean(radiance_gOri))
 	avgBlue = np.mean(np.mean(radiance_bOri))
 
-	MAX_avgBlue = np.max(radiance_bOri)	
+	MAX_avgBlue = np.max(radiance_bOri)
 	min_avgBlue = np.min(radiance_bOri)
 #	min_avgBlue = np.absolute(min_avgBlue)
-
 	MAX_avgGreen = np.max(radiance_gOri)
 	min_avgGreen = np.min(radiance_gOri)
 #	min_avgGreen = np.absolute(min_avgGreen)
 
+
 	nor_avgBlue = (avgBlue-min_avgBlue)/(MAX_avgBlue-min_avgBlue)
 #	nor_avgBlue = np.absolute(nor_avgBlue)
-
 	nor_avgGreen = (avgGreen-min_avgGreen)/(MAX_avgGreen-min_avgGreen)
 #	nor_avgGreen = np.absolute(nor_avgGreen)
 
@@ -220,7 +221,7 @@ def get_grayWorld(radiance_bOri, radiance_gOri,img):
 
 	radiance_rOri = rimg*delta
 
-	img_merge = cv2.merge((radiance_bOri,radiance_gOri,radiance_rOri)) 
+	img_merge = cv2.merge((radiance_bOri,radiance_gOri,radiance_rOri))
 
 	return img_merge
 
@@ -233,7 +234,7 @@ if __name__ == '__main__':
 	args = vars(ap.parse_args())
 
 	#Se usa el formato double para el algoritmo.
-	img = double(cv2.imread(args["image"]))/255 #/255
+	img = double(cv2.imread(args["image"]))/255 #/255	# 'DSC01369.jpg' 
 	#Usado para calcular el histograma y la conversion al canal YCrCb. La imagen 
 	#para ambos casos debe ser o int 8bits, o int 16bits o float 32bits: cv2.cvtColor y calcHist
 	imgOriginal = cv2.imread(args["image"])
@@ -242,8 +243,6 @@ if __name__ == '__main__':
 	cv2.namedWindow('img',cv2.WINDOW_NORMAL)
 	cv2.imshow("img",imgOriginal)
 
-	#-------------------Creacion del archivo--------------------------
-	f = open('img_txt.txt','a') #Tambien sirve open('img_txt.txt') Archivo para colocar los resultados de los analisis cuantitativos. Sera append
 
 	#-----Separar los canales de la Imagen----------------------------------------------------
 	bOri, gOri, rOri = cv2.split(img)
@@ -258,7 +257,7 @@ if __name__ == '__main__':
 	eps = 0.001		#Parametro de regularizacion (llamado en el paper epsilon). Para el Guided Filter
 
 	#-----Llamado a Funciones----------------------------------------------------
-	BbOri, BgOri = maxImagen(img,tamanyo)
+	BbOri, BgOri = maxImagen(img,tamMax)
 	dark_channel_bOri = get_dark_channel(bOri, tamanyo)
 	dark_channel_gOri = get_dark_channel(gOri, tamanyo)
 	trans_est_bOri = get_transmission_estimate(bOri, BbOri, omega, tamanyo)
@@ -269,176 +268,105 @@ if __name__ == '__main__':
 	transmission_gOri = np.reshape(filtro_gOri, (filas,columnas))
 	radiance_bOri = get_radiance(bOri, transmission_bOri, BbOri)
 	radiance_gOri = get_radiance(gOri, transmission_gOri, BgOri)
+
 	grayWorld = get_grayWorld(radiance_bOri, radiance_gOri, img)
 
-	
+
 	#-----Resultados----------------------------------------------------
-
-	cv2.namedWindow('darkChannelBlue',cv2.WINDOW_NORMAL)
-	cv2.imshow('darkChannelBlue', dark_channel_bOri)
-	cv2.namedWindow('darkChannelGreen',cv2.WINDOW_NORMAL)
-	cv2.imshow('darkChannelGreen', dark_channel_gOri)
-	cv2.namedWindow('transEstBlue',cv2.WINDOW_NORMAL)
-	cv2.imshow('transEstBlue', trans_est_bOri)
-	cv2.namedWindow('transEstGreen',cv2.WINDOW_NORMAL)
-	cv2.imshow('transEstGreen', trans_est_gOri)
-	cv2.namedWindow('FiltroBlue',cv2.WINDOW_NORMAL)
-	cv2.imshow('FiltroBlue', filtro_bOri)
-	cv2.namedWindow('FiltroGreen',cv2.WINDOW_NORMAL)
-	cv2.imshow('FiltroGreen', filtro_gOri)
-	cv2.namedWindow('transmisionBlue',cv2.WINDOW_NORMAL)
-	cv2.imshow('transmisionBlue', transmission_bOri)
-	cv2.namedWindow('transmisionGreen',cv2.WINDOW_NORMAL)
-	cv2.imshow('transmisionGreen', transmission_gOri)
-	cv2.namedWindow('radianciaBlue',cv2.WINDOW_NORMAL)
-	cv2.imshow('radianciaBlue', radiance_bOri)
-	cv2.namedWindow('radianciaGreen',cv2.WINDOW_NORMAL)
-	cv2.imshow('radianciaGreen', radiance_gOri)
-	cv2.namedWindow('imagenFinal',cv2.WINDOW_NORMAL)
-	cv2.imshow('imagenFinal', grayWorld)
-
+#	cv2.namedWindow('darkChannelBlue',cv2.WINDOW_NORMAL)
+#	cv2.imshow('darkChannelBlue', dark_channel_bOri)
+#	cv2.namedWindow('darkChannelGreen',cv2.WINDOW_NORMAL)
+#	cv2.imshow('darkChannelGreen', dark_channel_gOri)
+#	cv2.namedWindow('atmosphere',cv2.WINDOW_NORMAL)
+#	cv2.imshow('atmosphere', atmosphere)
+#	cv2.namedWindow('transEstBlue',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transEstBlue', trans_est_bOri)
+#	cv2.namedWindow('transEstGreen',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transEstGreen', trans_est_gOri)
+#	cv2.namedWindow('FiltroBlue',cv2.WINDOW_NORMAL)
+#	cv2.imshow('FiltroBlue', filtro_bOri)
+#	cv2.namedWindow('FiltroGreen',cv2.WINDOW_NORMAL)
+#	cv2.imshow('FiltroGreen', filtro_gOri)
+#	cv2.namedWindow('transmisionBlue',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transmisionBlue', transmission_bOri)
+#	cv2.namedWindow('transmisionGreen',cv2.WINDOW_NORMAL)
+#	cv2.imshow('transmisionGreen', transmission_gOri)
+#	cv2.namedWindow('radianciaBlue',cv2.WINDOW_NORMAL)
+#	cv2.imshow('radianciaBlue', radiance_bOri)
+#	cv2.namedWindow('radianciaGreen',cv2.WINDOW_NORMAL)
+#	cv2.imshow('radianciaGreen', radiance_gOri)
+	cv2.namedWindow('imagenFinal2',cv2.WINDOW_NORMAL)
+	cv2.imshow('imagenFinal2', grayWorld)
+#
 #	#-----Guardado de la imagen Recuperada-------------------------------------------
 	radianceNew = cv2.resize(grayWorld,None, fx=1.25,fy=1.25,interpolation=cv2.INTER_CUBIC)
 	radiance255 = radianceNew*255
-	cv2.imwrite('imagenRecuperadaDehazeGW.jpg',radiance255)
-	imgRecuperada = cv2.imread('imagenRecuperadaDehazeGW.jpg')
+	cv2.imwrite(args["image"]+"DehazeGWa.jpg", radiance255)
 
 	#-----Separacion de canales RGB-----------------------------------------------
-	Rrec, Grec, Brec = cv2.split(imgRecuperada)
-	cv2.namedWindow('canalRojo',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalRojo', Rrec)
-	cv2.namedWindow('canalVerde',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalVerde', Grec)
-	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
-	cv2.imshow('canalAzul', Brec)
-
-	#-----Comparaciones---------------------------------------------------------
-	'''
-	Comparaciones en las imagenes original y recuperada para observar la 
-	diferencia en el canal de luminancia
-	'''
-	img_yrb = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2YCR_CB)		#img_yrb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
-	YOri, CrOri, CbOri = cv2.split(img_yrb)
-
-	radiance_yrb = cv2.cvtColor(imgRecuperada, cv2.COLOR_BGR2YCR_CB)		#radiance_yrb = cv2.cvtColor(radiance, cv2.COLOR_BGR2YCrCb)
-	Yrec, Crrec, Cbrec = cv2.split(radiance_yrb)
-
-	cv2.namedWindow('img YCrCb',cv2.WINDOW_NORMAL)
-	cv2.imshow('img YCrCb', YOri)
-	cv2.namedWindow('radiancia img YCrCb',cv2.WINDOW_NORMAL)
-	cv2.imshow('radiancia img YCrCb', Yrec)
-
+#	Rrec, Grec, Brec = cv2.split(radiance255)
+#	cv2.namedWindow('canalRojo',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalRojo', Rrec)
+#	cv2.namedWindow('canalVerde',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalVerde', Grec)
+#	cv2.namedWindow('canalAzul',cv2.WINDOW_NORMAL)
+#	cv2.imshow('canalAzul', Brec)
+#
+#	#-----Comparaciones---------------------------------------------------------
+#	'''
+#	Comparaciones en las imagenes original y recuperada para observar la 
+#	diferencia en el canal de luminancia
+#	'''
+#	img_yrb = cv2.cvtColor(imgOriginal, cv2.COLOR_BGR2YCR_CB)		#img_yrb = cv2.cvtColor(img, cv2.COLOR_BGR2YCrCb)
+#	YOri, CrOri, CbOri = cv2.split(img_yrb)
+#
+#	radiance_yrb = cv2.cvtColor(radiance255, cv2.COLOR_BGR2YCR_CB)		#radiance_yrb = cv2.cvtColor(radiance, cv2.COLOR_BGR2YCrCb)
+#	Yrec, Crrec, Cbrec = cv2.split(radiance_yrb)
+#
+#	cv2.namedWindow('img YCrCb',cv2.WINDOW_NORMAL)
+#	cv2.imshow('img YCrCb', YOri)
+#	cv2.namedWindow('radiancia img YCrCb',cv2.WINDOW_NORMAL)
+#	cv2.imshow('radiancia img YCrCb', Yrec)
+#
 #	YOri_32bits = np.float32(YOri)
-	resta = cv2.subtract(YOri,Yrec)
-	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
-	cv2.imshow('Resta', resta)
-
-	#-----Calculo de Histograma----------------------------------------------------
-	'''
-	Se calcula el histograma de la imagen con haze, la imagen recuperada (c/u en el
-	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
-	del algoritmo
-	'''
-	color = ('b','g','r')
-	for i, col in enumerate(color):
-	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
-	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
-	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
-	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
-
-	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
-	   plt.title('Histograma Original')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlim([0,256])
-
-	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
-	   plt.title('Histograma Luminancia Original')
-	   plt.xlim([0,256])
-
-	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
-	   plt.title('Histograma Recuperada')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlabel('Bins')
-	   plt.xlim([0,256])
-
-	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
-	   plt.title('Histograma Luminancia Recuperada')
-	   plt.xlabel('Bins')
-	   plt.xlim([0,256])
-
-	plt.show()
-	
-	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
-	'''
-	Se realizan 3 tipos de analisis de la imagen resultante:
-	Espectro Frecuencial
-	Entropia
-	Deteccion de features
-	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
-	submarinas
-	'''
-
-	#Espectro Frecuencial
-	IMG = cv2.imread(args["image"],0)
-	IMGRec = cv2.imread('imagenRecuperadaDehazeGW.jpg',0)
-	img32 = np.float32(IMG)
-	imgRec32 = np.float32(IMGRec)
-
-	row,col = np.shape(img32)
-
-	fourier32 = np.fft.fft2(img32)/float(row*col)
-	fourierShift32 = np.fft.fftshift(fourier32)
-	mod_fourier32 = np.abs(fourierShift32)
-
-	max_mod_fourier32 = np.max(mod_fourier32)
-	thresh32 = max_mod_fourier32/1000
-	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
-	tam_thresh_fourier32 = np.size(thresh_fourier32)
-
-	iqm32 = tam_thresh_fourier32/(float(row*col))
-
-	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
-	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
-	mod_fourierRec32 = np.abs(fourierShiftRec32)
-
-	max_mod_fourierRec32 = np.max(mod_fourierRec32)
-	threshRec32 = max_mod_fourierRec32/1000
-	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
-	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
-
-	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
-
-	print iqm32
-	print iqmRec32
-
-	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
-	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
-	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
-	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
-	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
-	plt.show()
-
-	
-	#Entropia de la imagen a partir del histograma de grises de la iamgen
-	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
-	cv2.normalize(histogramIMG,histogramIMG,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-	histIMG = histogramIMG.sum()
-	probIMG = [float(h)/histIMG for h in histogramIMG]
-	entropyIMG = -np.sum([p*np.log2(p) for p in probIMG if p !=0])
-	print entropyIMG
-
-	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
-	cv2.normalize(histogramIMGRec,histogramIMGRec,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-	histIMGRec = histogramIMGRec.sum()
-	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
-	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
-	print entropyIMGRec
-
-	#-----Escritura del archivo con los resultados----------------------------------------------
-	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t DehazingGWa \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
-	f.close()
+#	resta = cv2.subtract(YOri,Yrec)
+#	cv2.namedWindow('Resta',cv2.WINDOW_NORMAL)
+#	cv2.imshow('Resta', resta)
+#
+#	#-----Calculo de Histograma----------------------------------------------------
+#	'''
+#	Se calcula el histograma de la imagen con haze, la imagen recuperada (c/u en el
+#	espacio RGB) y el canal de luminancia de c/u con el objeto de analizar los resultados
+#	del algoritmo
+#	'''
+#	color = ('b','g','r')
+#	for i, col in enumerate(color):
+#	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
+#	   histcolorOriginal_Y =  cv2.calcHist([YOri],[0],None,[256],[0,256])
+#	   histcolorRecuperada =  cv2.calcHist([radiance255],[i],None,[256],[0,256])
+#	   histcolorRecuperada_Y =  cv2.calcHist([Yrec],[0],None,[256],[0,256])
+#
+#	   plt.subplot(221), plt.plot(histcolorOriginal, color=col)
+#	   plt.title('Histograma Original')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlim([0,256])
+#
+#	   plt.subplot(222), plt.plot(histcolorOriginal_Y)
+#	   plt.title('Histograma Luminancia Original')
+#	   plt.xlim([0,256])
+#
+#	   plt.subplot(223), plt.plot(histcolorRecuperada,color=col)
+#	   plt.title('Histograma Recuperada')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlabel('Bins')
+#	   plt.xlim([0,256])
+#
+#	   plt.subplot(224), plt.plot(histcolorRecuperada_Y)
+#	   plt.title('Histograma Luminancia Recuperada')
+#	   plt.xlabel('Bins')
+#	   plt.xlim([0,256])
+#
+#	plt.show()
 
 	cv2.waitKey()
 	cv2.destroyAllWindows()
