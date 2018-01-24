@@ -32,6 +32,7 @@ def apply_mask(matrix, mask, fill_value):
 	El orden de ejecucion es Blue, Green, Red
 	'''
 	masked = np.ma.array(matrix,mask=mask,fill_value=fill_value)
+#	cv2.imshow("Masked", masked)
 	return masked.filled()
 
 
@@ -45,9 +46,11 @@ def apply_threshold(matrix, low_value, high_value):
 	'''
 	low_mask = matrix<low_value
 	matrix = apply_mask(matrix,low_mask,low_value)
+#	cv2.imshow("MatrixL", matrix)
 
 	high_mask = matrix>high_value
 	matrix = apply_mask(matrix,high_mask,high_value)
+#	cv2.imshow("MatrixH", matrix)
 
 	return matrix
 
@@ -97,6 +100,7 @@ def sColorBalance(img, porcentaje):
 		thresholded = apply_threshold(canal,bajo_val,alto_val)
 		# scale the canal
 		normalized = cv2.normalize(thresholded,thresholded.copy(), 0, 255, cv2.NORM_MINMAX)
+#		cv2.imshow("Madfe", normalized)
 		salida_canales.append(normalized)
 
 	return cv2.merge(salida_canales)
@@ -110,119 +114,42 @@ if __name__ == '__main__':
 
 	imgOriginal = cv2.imread(args["image"])
 
-	#-------------------Creacion del archivo--------------------------
-	f = open('img_txt.txt','a') #Archivo para colocar los resultados de los analisis cuantitativos. Sera append
-
 	#-----Llamado a Funcion----------------------------------------------------
 	imgRecuperada = sColorBalance(imgOriginal, 1)	#Porcentaje de umbral inferior y superior respecto al histograma de entrada. Este porcentaje puede ser distinto para c/limite del histograma
 
 	#-----Resultados----------------------------------------------------
-	cv2.namedWindow('imgOriginal',cv2.WINDOW_NORMAL)
-	cv2.imshow("imgOriginal", imgOriginal)
+#	cv2.namedWindow('imgOriginal',cv2.WINDOW_NORMAL)
+#	cv2.imshow("imgOriginal", imgOriginal)
 	cv2.namedWindow('imgRecuperada',cv2.WINDOW_NORMAL)
 	cv2.imshow("imgRecuperada", imgRecuperada)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
-	cv2.imwrite('imagenRecuperadaCR_RGB.jpg',imgRecuperada)
+	cv2.imwrite(args["image"]+"CR_HSV_RGB.jpg", imgRecuperada)
 
 	#-----Calculo de Histograma----------------------------------------------------
 	'''
 	Se calcula el histograma de la imagen original y la recuperada para analizar el
 	efecto del algoritmo sobre la imagen
 	'''
-	color = ('b','g','r')
-	for i, col in enumerate(color):
-	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
-	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
+#	color = ('b','g','r')
+#	for i, col in enumerate(color):
+#	   histcolorOriginal =  cv2.calcHist([imgOriginal],[i],None,[256],[0,256])
+#	   histcolorRecuperada =  cv2.calcHist([imgRecuperada],[i],None,[256],[0,256])
 
-	   plt.subplot(211), plt.plot(histcolorOriginal, color=col)
-	   plt.title('Histograma Original')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlim([0,256])
-
-
-	   plt.subplot(212), plt.plot(histcolorRecuperada,color=col)
-	   plt.title('Histograma Recuperada')
-	   plt.ylabel('Numero de Pixeles')
-	   plt.xlabel('Bins')
-	   plt.xlim([0,256])
+#	   plt.subplot(211), plt.plot(histcolorOriginal, color=col)
+#	   plt.title('Histograma Original')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlim([0,256])
 
 
-	plt.show()
-
-	#-----Analisis Cuantitativo de la Imagen------------------------------------------------
-	'''
-	Se realizan 3 tipos de analisis de la imagen resultante:
-	Espectro Frecuencial
-	Entropia
-	Deteccion de features
-	Con la finalidad de saber cual es el algoritmo que mejor funciona para las imagenes
-	submarinas
-	'''
-
-	#Espectro Frecuencial
-	IMG = cv2.imread(args["image"],0)
-	IMGRec = cv2.imread('imagenRecuperadaCR_RGB.jpg',0)
-#	IMG = cv2.resize(IMG, (1024, 768))
-#	IMGRec = cv2.resize(IMGRec, (1024, 768))
-	img32 = np.float32(IMG)
-	imgRec32 = np.float32(IMGRec)
-
-	row,col = np.shape(img32)
-
-	fourier32 = np.fft.fft2(img32)/float(row*col)
-	fourierShift32 = np.fft.fftshift(fourier32)
-	mod_fourier32 = np.abs(fourierShift32)
-
-	max_mod_fourier32 = np.max(mod_fourier32)
-	thresh32 = max_mod_fourier32/1000
-	thresh_fourier32 = mod_fourier32[(mod_fourier32>thresh32)]	#*mod_fourier
-	tam_thresh_fourier32 = np.size(thresh_fourier32)
-
-	iqm32 = tam_thresh_fourier32/(float(row*col))
-
-	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
-	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
-	mod_fourierRec32 = np.abs(fourierShiftRec32)
-
-	max_mod_fourierRec32 = np.max(mod_fourierRec32)
-	threshRec32 = max_mod_fourierRec32/1000
-	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
-	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
-
-	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
-
-	print iqm32
-	print iqmRec32
-
-	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
-	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
-	plt.subplot(312),plt.imshow(20*np.log(mod_fourier32))
-	plt.title('Magnitude Spectrum Original'), plt.xticks([]), plt.yticks([])
-	plt.subplot(313),plt.imshow(20*np.log(mod_fourierRec32))
-	plt.title('Magnitude Spectrum Rec'), plt.xticks([]), plt.yticks([])
-	plt.show()
-
-
-	#Entropia de la imagen a partir del histograma de grises de la iamgen
-	histogramIMG = cv2.calcHist([IMG],[0],None,[256],[0,256])
-	cv2.normalize(histogramIMG,histogramIMG,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-	histIMG = histogramIMG.sum()
-	probIMG = [float(h)/histIMG for h in histogramIMG]
-	entropyIMG = -np.sum([p*np.log2(p) for p in probIMG if p !=0])
-	print entropyIMG
-
-	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
-	cv2.normalize(histogramIMGRec,histogramIMGRec,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-	histIMGRec = histogramIMGRec.sum()
-	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
-	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
-	print entropyIMGRec
-
-	#-----Escritura del archivo con los resultados----------------------------------------------
-	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t %f \t %f \t RGBStretch \n' %(args["image"], row, col, iqm32, iqmRec32, entropyIMG, entropyIMGRec))
-	f.close()
+#	   plt.subplot(212), plt.plot(histcolorRecuperada,color=col)
+#	   plt.title('Histograma Recuperada')
+#	   plt.ylabel('Numero de Pixeles')
+#	   plt.xlabel('Bins')
+#	   plt.xlim([0,256])
+#
+#
+#	plt.show()
 
 	cv2.waitKey(0)
 	cv2.destroyAllWindows()
