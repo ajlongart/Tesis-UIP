@@ -27,7 +27,7 @@ if __name__ == '__main__':
 	#Constuccion del parse y del argumento
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
-	ap.add_argument("-j", "--image2", required = True, help = "Imagen de Entrada Mejorada")
+#	ap.add_argument("-j", "--image2", required = True, help = "Imagen de Entrada Mejorada")
 	args = vars(ap.parse_args())
 
 
@@ -43,11 +43,11 @@ if __name__ == '__main__':
 	f = open('img_txtEntropia.txt','a') #Tambien sirve open('img_txt.txt') Archivo para colocar los resultados de los analisis cuantitativos. Sera append	
 
 	IMG = cv2.imread(args["image"],0)
-	IMGRec = cv2.imread(args["image2"],0)
+#	IMGRec = cv2.imread(args["image2"],0)
 #	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 #	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	img32 = np.float32(IMG)
-	imgRec32 = np.float32(IMGRec)
+#	imgRec32 = np.float32(IMGRec)
 
 	row,col = np.shape(img32)
 
@@ -59,17 +59,17 @@ if __name__ == '__main__':
 	entropyIMG = -np.sum([p*np.log2(p) for p in probIMG if p !=0])
 	print entropyIMG
 
-	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
-	cv2.normalize(histogramIMGRec,histogramIMGRec,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
-	histIMGRec = histogramIMGRec.sum()
-	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
-	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
-	print entropyIMGRec
+#	histogramIMGRec = cv2.calcHist([IMGRec],[0],None,[256],[0,256])
+#	cv2.normalize(histogramIMGRec,histogramIMGRec,alpha=0, beta=1, norm_type=cv2.NORM_MINMAX)
+#	histIMGRec = histogramIMGRec.sum()
+#	probIMGRec = [float(h)/histIMGRec for h in histogramIMGRec]
+#	entropyIMGRec = -np.sum([p*np.log2(p) for p in probIMGRec if p !=0])
+#	print entropyIMGRec
 
 	#-----Escritura del archivo con los resultados----------------------------------------------
 	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t DehazingGWa \n' %(args["image"], row, col, entropyIMG, entropyIMGRec))
-	f.write('%s \t %d \t %d \t %f \t %f \t DehazingGWa \n' %(args["image2"], row, col, entropyIMG, entropyIMGRec))
+	f.write('%s \t %d \t %d \t %f \n' %(args["image"], row, col, entropyIMG))
+#	f.write('%s \t %d \t %d \t %f \t %f \n' %(args["image2"], row, col, entropyIMG, entropyIMGRec))
 	f.close()
 
 	cv2.waitKey()
