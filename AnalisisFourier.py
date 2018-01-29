@@ -27,7 +27,7 @@ if __name__ == '__main__':
 	#Constuccion del parse y del argumento
 	ap = argparse.ArgumentParser()
 	ap.add_argument("-i", "--image", required = True, help = "Imagen de Entrada")
-	ap.add_argument("-j", "--image2", required = True, help = "Imagen de Entrada Mejorada")
+#	ap.add_argument("-j", "--image2", required = True, help = "Imagen de Entrada Mejorada")
 	args = vars(ap.parse_args())
 
 
@@ -44,11 +44,11 @@ if __name__ == '__main__':
 
 	#Espectro Frecuencial
 	IMG = cv2.imread(args["image"],0)
-	IMGRec = cv2.imread(args["image2"],0)
+#	IMGRec = cv2.imread(args["image2"],0)
 #	IMG = cv2.resize(IMG,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 #	IMGRec = cv2.resize(IMGRec,None, fx=0.8,fy=0.8,interpolation=cv2.INTER_AREA)
 	img32 = np.float32(IMG)
-	imgRec32 = np.float32(IMGRec)
+#	imgRec32 = np.float32(IMGRec)
 
 	row,col = np.shape(img32)
 
@@ -63,19 +63,19 @@ if __name__ == '__main__':
 
 	iqm32 = tam_thresh_fourier32/(float(row*col))
 
-	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
-	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
-	mod_fourierRec32 = np.abs(fourierShiftRec32)
+#	fourierRec32 = np.fft.fft2(imgRec32)/float(row*col)
+#	fourierShiftRec32 = np.fft.fftshift(fourierRec32)
+#	mod_fourierRec32 = np.abs(fourierShiftRec32)
+#
+#	max_mod_fourierRec32 = np.max(mod_fourierRec32)
+#	threshRec32 = max_mod_fourierRec32/1000
+#	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
+#	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
 
-	max_mod_fourierRec32 = np.max(mod_fourierRec32)
-	threshRec32 = max_mod_fourierRec32/1000
-	thresh_fourierRec32 = mod_fourierRec32[(mod_fourierRec32>threshRec32)]	#*mod_fourier
-	tam_thresh_fourierRec32 = np.size(thresh_fourierRec32)
-
-	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
+#	iqmRec32 = tam_thresh_fourierRec32/(float(row*col))
 
 	print iqm32
-	print iqmRec32
+#	print iqmRec32
 
 #	plt.subplot(311),plt.imshow(img32,cmap = 'gray')
 #	plt.title('Input Image'), plt.xticks([]), plt.yticks([])
@@ -87,8 +87,8 @@ if __name__ == '__main__':
 
 	#-----Escritura del archivo con los resultados----------------------------------------------
 	#Con write()
-	f.write('%s \t %d \t %d \t %f \t %f \t DehazingGWa \n' %(args["image"], row, col, iqm32, iqmRec32)
-	f.write('%s \t %d \t %d \t %f \t %f \t DehazingGWa \n' %(args["image2"], row, col, iqm32, iqmRec32))
+	f.write('%s \t %d \t %d \t %f \n' %(args["image"], row, col, iqm32))
+#	f.write('%s \t %d \t %d \t %f \t %f \n' %(args["image2"], row, col, iqm32, iqmRec32))
 	f.close()
 
 	cv2.waitKey()
