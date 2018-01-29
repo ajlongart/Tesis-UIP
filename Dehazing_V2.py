@@ -183,7 +183,7 @@ def get_radiance(img, transmission, atmosphere):
 
 	return radiance
 
-if __name__ == '__main__'
+if __name__ == '__main__':
 	#-----Lectura de Imagen-----------------------------------------------------
 	#Constuccion del parse y del argumento
 	ap = argparse.ArgumentParser()
