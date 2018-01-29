@@ -127,7 +127,7 @@ if __name__ == '__main__':
 	cv2.imshow("imgRecuperada", imgRecuperadaRGB)
 
 	#-----Guardado de la imagen Recuperada-------------------------------------------
-	cv2.imwrite(args["image"]+"CR_RGB.jpg", imgRecuperadaRGB)
+	cv2.imwrite(args["image"]+"CR_HSV_RGB.jpg", imgRecuperadaRGB)
 
 	#-----Calculo de Histograma----------------------------------------------------
 	'''
