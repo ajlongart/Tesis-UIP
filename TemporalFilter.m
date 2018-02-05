@@ -5,7 +5,8 @@ close all;  % Close all figures (except those of imtool.)
 imtool close all;  % Close all imtool figures.
 clear;  % Erase all existing variables.
 
-%% Parametros filtro Versión I (Tomando en cuenta el video)
+%% Parametros filtro
+%FIR Versión I
 vidObj = VideoReader('Sunlight_Reflection2_2.mp4');
 get(vidObj) 
 nFrames = vidObj.NumberOfFrames;    % Determine how many frames there are.
@@ -13,23 +14,28 @@ width = vidObj.Width;               % get image width
 height = vidObj.Height;             % get image height
 FPS = vidObj.FrameRate;
 time = vidObj.Duration;
-Fp  = 0.5;      % .5 Hz passband-edge frequency
+Fp  = 0.5;        % 1 Hz passband-edge frequency
 Fst = 2;        % 20 Hz stop-edge frequency
 Ap  = 1;        % Corresponds to 1 dB peak-to-peak ripple
 Ast = 80;       % Corresponds to 60 dB stopband attenuation
 N = 6;
 
-%Filtro (usando FIR1)
-Wn = 0.02;  %0.6/(FPS/2)
+Wn = 0.02;  %0.6/(FPS/2)    1) 0.02; 2) 
+
 B = fir1(N,Wn,'low');
 fvtool(B,'Fs',FPS,'Color','White')
 
-%Filtro (usando equiripple lowpass fir)
 eqnum = fdesign.lowpass('N,Fp,Fst',N,Fp,Fst,FPS);
 f1 = design(eqnum, 'equiripple');    %Discrete-Time FIR Filter (real)
 f1Num = f1.Numerator;   %Para filtros FIR (equiripple y kaiserwin)
 info(f1)
-fvtool(f1,'Fs',FPS,'Color','White')
+
+LPF = fdesign.lowpass('N,F3dB',N,Wn,FPS);
+f2 = design(LPF, 'butter');    %Discrete-Time FIR Filter (real)
+f2Num = f2.ScaleValues;   %Para filtros IIR (Butterworth)
+info(f2)
+
+fvtool(f2,'Fs',FPS,'Color','White')
 
 %% Imagenes Nuevas para el Filtro
 current = double(zeros(height,width));
@@ -41,62 +47,58 @@ previous5 = double(zeros(height,width));
 previous6 = double(zeros(height,width));
 salida = double(zeros(height,width));
 
-%image8 = image1*B(1)+image2*B(2)+image3*B(3)+image4*B(4)+image5*B(5)+image6*B(6)+image7*B(7);
-
-
 pixel_y = zeros(1,nFrames);
-freqP_y = 1:nFrames;
+pixel_salida = zeros(1,nFrames);
 
 for iFrame = 1:nFrames
     frame = read(vidObj,iFrame); % get one RGB image
     
-    %Conversión del frame a YCbCr (Luminancia)
+    grayImage = rgb2gray(frame);
     ycbcr = rgb2ycbcr(frame);
     canal_y = ycbcr(:,:,1);
     canal_y = double(canal_y);
-    %imshow(canal_y);
+    current = canal_y;
     
-    %Para calcular la FFT de un pixel [Para obtener la frecuencia de corte] (Ahora sí)
-    pixel_y(iFrame) = canal_y((3*height)/4,(3*width)/4);
-    NFFT = 2^nextpow2(nFrames); % Next power of 2 from length of y
-    modP_y = fft(pixel_y,NFFT)/length(pixel_y); 
+    pixel_y(iFrame) = canal_y((height)/2,(3*width)/4);
     
     ejet = (0:length(pixel_y)-1)*time/length(pixel_y);
+    
+    NFFT = 2^nextpow2(nFrames); % Next power of 2 from length of y
+    modP_y = fft(pixel_y,NFFT)/length(pixel_y);
     ejef = FPS*linspace(0,1,NFFT/2+1);
 
-%     P_y = fft(pixel_y)/length(pixel_y);
-%     modP_y = abs(P_y);
-%     ejef = (0:length(P_y)-1)*time/length(P_y);   % ejef = 0:fs/length(y):fs/N;
-%     plot(ejef,modP_y);
-    
-%     current(iFrame)=canal_y(:,:,iFrame);
-%     previous1(iFrame)=canal_y(:,:,iFrame);
-%     previous2(iFrame)=canal_y(:,:,iFrame);
-%     previous3(iFrame)=canal_y(:,:,iFrame);
-%     previous4(iFrame)=canal_y(:,:,iFrame);
-%     previous5(iFrame)=canal_y(:,:,iFrame);
-%     previous6(iFrame)=canal_y(:,:,iFrame);
-    
-    %"Implementación del Filtro"
-     for i = 1:height-1
-        for j = 1:width-1
-            salida(i,j) = canal_y(i,j)*(B(1)+B(2)+B(3)+B(4)+B(5)+B(6)+B(7));
-            %salida(i,j) = B(1)*current(i,j)+B(2)*previous1(i,j)+B(3)*previous2(i,j)+B(4)*previous3(i,j)+B(5)*previous4(i,j)+B(6)*previous5(i,j)+B(7)*previous6(i,j);
-        end
-    end
-
-    %salida = canal_y.*(B(1)+B(2)+B(3)+B(4)+B(5)+B(6)+B(7));
-    %salida = canal_y.*(image1*B(1)+image2*B(2)+image3*B(3)+image4*B(4)+image5*B(5)+image6*B(6)+image7*B(7));
-    %salida = convn(canal_y, image8, 'full');
-    %salida(i,j) = conv2(canal_y(i,j), image8(i,j), 'same');                %https://stackoverflow.com/questions/20025604/applying-a-temporal-gaussian-filter-to-a-series-of-images
+    salida = B(1).*previous1+B(2).*previous2+B(3).*previous3+B(4).*previous4+B(5).*previous5+B(6).*previous6+B(7).*current;
+    previous1 = previous2;
+    previous2 = previous3;
+    previous3 = previous4;
+    previous4 = previous5;
+    previous5 = previous6;
+    previous6 = current;
     
     imshow(salida,[]);
     %canal_y = double(canal_y);
     %imshow(canal_y,[]);
+    
+    pixel_salida(iFrame) = salida((height)/2,(3*width)/4);
+    
+    ejets = (0:length(pixel_salida)-1)*time/length(pixel_salida);
+    
+    NFFT = 2^nextpow2(nFrames); % Next power of 2 from length of y
+    mod_salida = fft(pixel_salida,NFFT)/length(pixel_salida);
+    ejefs = FPS*linspace(0,1,NFFT/2+1);
 end
 
-%% Plot de Resultados de FFT
+%% Plot de Resultados
 figure
-plot(ejet,pixel_y)  %Tiempo
+plot(ejet,pixel_y)
+title('Luminancia para pixel p(x)');
 figure
-plot(ejef,2*abs(modP_y(1:NFFT/2+1))) %Frecuencia
+plot(ejef,2*abs(modP_y(1:NFFT/2+1)))
+title('FFT del pixel p(x)');
+
+figure
+plot(ejets,pixel_salida)
+title('Luminancia para pixel Mod p(x)');
+figure
+plot(ejefs,2*abs(mod_salida(1:NFFT/2+1)))
+title('FFT del pixel Mod p(x)');
