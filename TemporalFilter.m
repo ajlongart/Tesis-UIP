@@ -8,20 +8,19 @@ clear;  % Erase all existing variables.
 
 %% Parametros filtro
 %FIR Versión I
-vidObj = VideoReader('Sunlight_Reflection1_1.mp4');
+vidObj = VideoReader('Sunlight_Reflection4_4_corto2.mp4');
 get(vidObj) 
 nFrames = vidObj.NumberOfFrames;    % Determine how many frames there are.
 width = vidObj.Width;               % get image width
 height = vidObj.Height;             % get image height
 FPS = vidObj.FrameRate;
 time = vidObj.Duration;
-Fp  = 0.5;        % 0.5 Hz passband-edge frequency
-Fst = 2;        % 2 Hz stop-edge frequency
-Ap  = 1;        % Corresponds to 1 dB peak-to-peak ripple
-Ast = 80;       % Corresponds to 80 dB stopband attenuation
-N = 10;
 
-Wn = 0.031;  %0.6/(FPS/2)    Frecuencia de corte normalizada
+Fp  = 0.5;      % 0.5 Hz passband-edge frequency
+Fst = 2;        % 2 Hz stop-edge frequency
+N = 20;
+
+Wn = 0.031;  % 0.0065; %Fp/FPS    1) 0.02; 2) 
 
 B = fir1(N,Wn,'low');
 fvtool(B,'Fs',FPS,'Color','White')
@@ -31,12 +30,7 @@ f1 = design(eqnum, 'equiripple');    %Discrete-Time FIR Filter (real)
 f1Num = f1.Numerator;   %Para filtros FIR (equiripple y kaiserwin)
 info(f1)
 
-LPF = fdesign.lowpass('N,F3dB',N,Wn,FPS);
-f2 = design(LPF, 'butter');    %Discrete-Time FIR Filter (real)
-f2Num = f2.ScaleValues;   %Para filtros IIR (Butterworth)
-info(f2)
-
-fvtool(f2,'Fs',FPS,'Color','White')
+%fvtool(f2,'Fs',FPS,'Color','White')
 
 %% Imagenes Nuevas para el Filtro
 current = double(zeros(height,width));
@@ -50,6 +44,16 @@ previous7 = double(zeros(height,width));
 previous8 = double(zeros(height,width));
 previous9 = double(zeros(height,width));
 previous10 = double(zeros(height,width));
+previous11 = double(zeros(height,width));
+previous12 = double(zeros(height,width));
+previous13 = double(zeros(height,width));
+previous14 = double(zeros(height,width));
+previous15 = double(zeros(height,width));
+previous16 = double(zeros(height,width));
+previous17 = double(zeros(height,width));
+previous18 = double(zeros(height,width));
+previous19 = double(zeros(height,width));
+previous20 = double(zeros(height,width));
 salida = double(zeros(height,width));
 
 pixel_y1 = zeros(1,nFrames);
@@ -71,7 +75,7 @@ for iFrame = 1:nFrames
     ycbcr = rgb2ycbcr(frame);
     canal_y = ycbcr(:,:,1);
     canal_y = double(canal_y);
-    %imshow(canal_y);
+    %imshow(canal_y,[]);
     current = canal_y;
     
     pixel_y1(iFrame) = canal_y((height)/2,(width)/2);
@@ -90,14 +94,7 @@ for iFrame = 1:nFrames
     modP_y5 = fft(pixel_y5,NFFT)/length(pixel_y5);
     ejef = FPS*linspace(0,1,NFFT/2+1);
 
-%     salida = f2Num(1).*previous1+f2Num(2).*previous2+f2Num(3).*previous3+f2Num(4).*previous4+f2Num(5).*previous5+f2Num(6).*current;
-%     previous1 = previous2;
-%     previous2 = previous3;
-%     previous3 = previous4;
-%     previous4 = previous5;
-%     previous5 = current;
-    
-    salida = B(1).*previous1+B(2).*previous2+B(3).*previous3+B(4).*previous4+B(5).*previous5+B(6).*current.*previous5+B(6).*previous6+B(7).*previous7+B(8).*previous8+B(9).*previous9+B(10).*previous10+B(11).*current;
+    salida = B(1).*previous1+B(2).*previous2+B(3).*previous3+B(4).*previous4+B(5).*previous5+B(6).*previous6+B(7).*previous7+B(8).*previous8+B(9).*previous9+B(10).*previous10+B(11).*previous11+B(12).*previous12+B(13).*previous13+B(14).*previous14+B(15).*previous15+B(16).*previous16+B(17).*previous17+B(18).*previous18+B(19).*previous19+B(20).*previous20+B(21).*current;
     previous1 = previous2;
     previous2 = previous3;
     previous3 = previous4;
@@ -107,7 +104,17 @@ for iFrame = 1:nFrames
     previous7 = previous8;
     previous8 = previous9;
     previous9 = previous10;
-    previous10 = current;
+    previous10 = previous11;
+    previous11 = previous12;
+    previous12 = previous13;
+    previous13 = previous14;
+    previous14 = previous15;
+    previous15 = previous16;
+    previous16 = previous17;
+    previous17 = previous18;
+    previous18 = previous19;
+    previous19 = previous20;
+    previous20 = current;
     
     imshow(salida,[]);
 
@@ -129,8 +136,6 @@ for iFrame = 1:nFrames
     
     % Resta de Imagenes
     resta = salida-canal_y;
-    restafil = resta-salida;
-    filt2 = or(salida,resta);
     %imshow(resta,[]);
 
 end
