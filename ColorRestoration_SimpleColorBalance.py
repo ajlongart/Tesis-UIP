@@ -12,6 +12,9 @@ de la imagen haciendo que los colores de la imagen de salida este
 mejorada. Se uso el modelo de color RGB para el algoritmo
 
 Modulo implementado en Python
+
+Basado en el git simple_cb.py de DavidYKay
+Disponible en: https://gist.github.com/DavidYKay/9dad6c4ab0d8d7dbf3dc
 '''
 # Python 2/3 compatibility
 import cv2
